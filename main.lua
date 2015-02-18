@@ -4,27 +4,61 @@
 -------------------------------------
 -------------------------------------
 function love.load()
+-- Random seed
+  math.randomseed(os.time())
+  
 -- Shapes
-  Shapes = readOnlyTable {
-    LINE          = 1,
-    L             = 2,
-    RL            = 3,
-    SQUARE        = 4,
-    S             = 5,
-    Z             = 6,
-    T             = 7,
-    tiny          = 8,
-    otherstuff = {}
+  Shapes = 
+  {
+    {
+      {4, 1},
+      {5, 1},
+      {6, 1},
+      {7, 1}
+    }, -- I (line)
+    {
+      {4, 2},
+      {5, 2},
+      {6, 2},
+      {6, 1}
+    }, -- L
+    {
+      {4, 1},
+      {4, 2},
+      {5, 2},
+      {6, 2}
+    }, -- RL
+    {
+      {5, 1},
+      {5, 2},
+      {6, 1},
+      {6, 2}
+    }, -- O (square)
+    {
+      {4, 2},
+      {5, 2},
+      {5, 1},
+      {6, 1}
+    }, -- S
+    {
+      {4, 1},
+      {5, 1},
+      {5, 2},
+      {6, 2}
+    }, -- Z
+    {
+      {4, 2},
+      {5, 1},
+      {5, 2},
+      {6, 2}
+    }, -- T
+    {
+      {5, 1}
+    }, -- tiny (1 pixel)
   }
   
-  
---  squares = {}
-  current = { 
-              shape = Shapes.tiny, 
-              squares = { 
-                          {5, 1} 
-                        }
-            }
+-- THE current Shape
+  current = {}
   timer = 0
   
   -- 10*18
@@ -53,7 +87,7 @@ function love.load()
   window.x = 20
   window.y = 20
   
-  newTinySquare()
+  newShape()
   
   love.window.setMode(440, 600, {resizable=true, vsync=false, minwidth=280, minheight=440})
 end
@@ -70,15 +104,12 @@ function love.update(dt)
     updateGrid()
   end
   
---  if current.y == 18 then
---    newTinySquare()
---  end
   if not testMap(0,1) then
-    newTinySquare()
+    newShape()
   end
   
   if timer >= 1 then
-    debugPrintMatrix()
+--    debugPrintMatrix()
     if next(current) ~= nil then
       if testMap(0, 1) then
         updateMapDown()
@@ -136,34 +167,23 @@ end
 function testMap(x, y)
     if next(current) == nil then
       return false
-    elseif next(current.squares) == nil then
-      return false
     else
-      return testMapPieces(x, y, current.squares)
-    end
-end
-
--------------------------------------
--------------------------------------
--- testMapPieces = TESTS IF EACH SQUARES OF THE SHAPE WILL BE IN THE BOUNDARIES OF THE GRID
--------------------------------------
--------------------------------------
-function testMapPieces(x, y, pieces)
-  local nb_pieces = 0
-  
-  for i = 1, #pieces do
-    local px = pieces[i][1]
-    local py = pieces[i][2]
-    
-    if ((py + y) <= #map) and ((py + y) > 0) and
-      ((px + x) <= #map[#map]) and ((px + x) > 0) then
-        if (map[py+y][px+x] == 0) then
-          nb_pieces = nb_pieces + 1
+      local nb_pieces = 0
+      
+      for i = 1, #current do
+        local px = current[i][1]
+        local py = current[i][2]
+        
+        if ((py + y) <= #map) and ((py + y) > 0) and
+          ((px + x) <= #map[#map]) and ((px + x) > 0) then
+            if (map[py+y][px+x] ~= 1) then
+              nb_pieces = nb_pieces + 1
+            end
         end
+      end
+      
+      return (nb_pieces == #current)
     end
-  end
-  
-  return (nb_pieces == #pieces)
 end
 
 -------------------------------------
@@ -178,7 +198,6 @@ function printLines()
   local mx = window.x*w
   local my = window.y*h
   
-  --print("w", w, "h", h, "mx", mx, "my", my)
   love.graphics.line(0, 0, 0, my)
   love.graphics.line(0, 0, mx, 0)
   love.graphics.line(0, my, mx, my)
@@ -196,28 +215,32 @@ function printGrid()
   
   for h=1,#map,1 do
     for w=1,#map[h] do
-      if map[h][w] == 1 then
+      if (map[h][w] ~= 0) then
         love.graphics.rectangle("fill", (w - 1) * window.x, (h - 1) * window.y, window.x, window.y)
       end
     end
   end
 end
 
--------------------------------------
--------------------------------------
--- newTinySquare = CREATES A NEW TINY SQUARE ON TOP OF THE GRID
--------------------------------------
--------------------------------------
-function newTinySquare()
-  current.shape = Shapes.tiny
-  current.squares = { {5, 1} }
-  
-  for i = 1, #current.squares do
-    local x = current.squares[i][1]
-    local y = current.squares[i][2]
+
+function newShape()
+  for i = 1, #current do
+    local x = current[i][1]
+    local y = current[i][2]
     map[y][x] = 1
   end
+  
+  local r = math.random(1,8)
+  print("r = ", r)
+  current = Shapes[r]
+  
+  for i = 1, #current do
+    local x = current[i][1]
+    local y = current[i][2]
+    map[y][x] = 2
+  end
 end
+
 
 -------------------------------------
 -------------------------------------
@@ -225,21 +248,12 @@ end
 -------------------------------------
 -------------------------------------
 function updateMapDown()
---  for i = 1, #current.squares do
---    local x = current.squares[i][1]
---    local y = current.squares[i][2]
---    if map[y+1][x] == 1 then
---      newTinySquare()
---      return
---    end
---  end
-  
-  for i = 1, #current.squares do
-    local x = current.squares[i][1]
-    local y = current.squares[i][2]
+  for i = #current, 1, -1  do
+    local x = current[i][1]
+    local y = current[i][2]
     map[y][x] = 0
-    map[y+1][x] = 1
-    current.squares[i][2] = y + 1
+    map[y+1][x] = 2
+    current[i][2] = y + 1
   end
 end
 
@@ -249,25 +263,13 @@ end
 -------------------------------------
 -------------------------------------
 function updateMapLeft()
---  local nb_pieces = 0
-  
---  for i = 1, #current.squares do
---    local x = current.squares[i][1]
---    local y = current.squares[i][2]
---    if map[y][x - 1] == 0 then
---      nb_pieces = nb_pieces + 1
---    end
---  end
-  
---  if (nb_pieces == #current.squares) then
-    for i = 1, #current.squares do
-      local x = current.squares[i][1]
-      local y = current.squares[i][2]
-      map[y][x] = 0
-      map[y][x-1] = 1
-      current.squares[i][1] = x - 1
-    end
---  end
+  for i = 1, #current do
+    local x = current[i][1]
+    local y = current[i][2]
+    map[y][x] = 0
+    map[y][x-1] = 2
+    current[i][1] = x - 1
+  end
 end
 
 
@@ -277,25 +279,13 @@ end
 -------------------------------------
 -------------------------------------
 function updateMapRight()
---  local nb_pieces = 0
-  
---  for i = 1, #current.squares do
---    local x = current.squares[i][1]
---    local y = current.squares[i][2]
---    if map[y][x + 1] == 0 then
---      nb_pieces = nb_pieces + 1
---    end
---  end
-  
---  if (nb_pieces == #current.squares) then
-    for i = 1, #current.squares do
-      local x = current.squares[i][1]
-      local y = current.squares[i][2]
-      map[y][x] = 0
-      map[y][x+1] = 1
-      current.squares[i][1] = x + 1
-    end
---  end
+  for i = #current, 1, -1 do
+    local x = current[i][1]
+    local y = current[i][2]
+    map[y][x] = 0
+    map[y][x+1] = 2
+    current[i][1] = x + 1
+  end
 end
 
 
@@ -310,20 +300,20 @@ function updateMapBottom()
   end
 end
 
--------------------------------------
--------------------------------------
--- findTopOfCol = STACKS SQUARE ON TOP OF OTHERS IF SO
--------------------------------------
--------------------------------------
-function findTopOfCol(x)
-  local i
-  for i=#map,1,-1 do
-    if map[i][x] == 0 then
-      return i
-    end
-  end
-  return 1
-end
+---------------------------------------
+---------------------------------------
+---- findTopOfCol = STACKS SQUARE ON TOP OF OTHERS IF SO
+---------------------------------------
+---------------------------------------
+--function findTopOfCol(x)
+--  local i
+--  for i=#map,1,-1 do
+--    if map[i][x] == 0 then
+--      return i
+--    end
+--  end
+--  return 1
+--end
 
 -------------------------------------
 -------------------------------------
@@ -362,23 +352,8 @@ function updateGrid()
       end
     end
   end
-  
-  newTinySquare()
-end
 
--------------------------------------
--------------------------------------
--- readOnlyTable = Makes the tablemap readyonly as a structure
--------------------------------------
--------------------------------------
-function readOnlyTable(table)
-   return setmetatable({}, {
-     __index = table,
-     __newindex = function(table, key, value)
-                    error("Attempt to modify read-only table")
-                  end,
-     __metatable = false
-   });
+  newShape()
 end
 
 -------------------------------------
