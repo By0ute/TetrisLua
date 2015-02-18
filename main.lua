@@ -21,8 +21,6 @@ function love.load()
 --  squares = {}
   current = { 
               shape = Shapes.tiny, 
-              x = 5, 
-              y = 1, 
               squares = { 
                           {5, 1} 
                         }
@@ -65,20 +63,23 @@ end
 -- UPDATE = WORK AT EACH TIME
 -------------------------------------
 -------------------------------------
-function love.update(dt)  
+function love.update(dt)
   timer = timer + dt
   
   if (madeALine()) then
     updateGrid()
   end
   
-  if current.y == 18 then
+--  if current.y == 18 then
+--    newTinySquare()
+--  end
+  if not testMap(0,1) then
     newTinySquare()
   end
   
   if timer >= 1 then
+    debugPrintMatrix()
     if next(current) ~= nil then
-      --print("c.x", current.x, "c.y", current.y)
       if testMap(0, 1) then
         updateMapDown()
       end
@@ -156,7 +157,9 @@ function testMapPieces(x, y, pieces)
     
     if ((py + y) <= #map) and ((py + y) > 0) and
       ((px + x) <= #map[#map]) and ((px + x) > 0) then
-        nb_pieces = nb_pieces + 1
+        if (map[py+y][px+x] == 0) then
+          nb_pieces = nb_pieces + 1
+        end
     end
   end
   
@@ -222,13 +225,14 @@ end
 -------------------------------------
 -------------------------------------
 function updateMapDown()
-  for i = 1, #current.squares do
-    local x = current.squares[i][1]
-    local y = current.squares[i][2]
-    if map[y][x] == 1 then
-      newTinySquare()
-      return
-  end
+--  for i = 1, #current.squares do
+--    local x = current.squares[i][1]
+--    local y = current.squares[i][2]
+--    if map[y+1][x] == 1 then
+--      newTinySquare()
+--      return
+--    end
+--  end
   
   for i = 1, #current.squares do
     local x = current.squares[i][1]
@@ -237,60 +241,72 @@ function updateMapDown()
     map[y+1][x] = 1
     current.squares[i][2] = y + 1
   end
-  
-  
---  if (map[current.y + 1][current.x] == 1) then
---    newTinySquare()
---  else
---    map[current.y][current.x] = 0
---    current.y = current.y + 1
---    map[current.y][current.x] = 1
---  end
 end
 
 -------------------------------------
 -------------------------------------
--- updateMapLeft = MOVES THE CURRENT SQUARE LEFT
+-- updateMapLeft = MOVES THE CURRENT SHAPE LEFT
 -------------------------------------
 -------------------------------------
 function updateMapLeft()
-  if (map[current.y][current.x - 1] == 0) then
-    map[current.y][current.x] = 0
-    current.x = current.x - 1
-    map[current.y][current.x] = 1
-  end
+--  local nb_pieces = 0
+  
+--  for i = 1, #current.squares do
+--    local x = current.squares[i][1]
+--    local y = current.squares[i][2]
+--    if map[y][x - 1] == 0 then
+--      nb_pieces = nb_pieces + 1
+--    end
+--  end
+  
+--  if (nb_pieces == #current.squares) then
+    for i = 1, #current.squares do
+      local x = current.squares[i][1]
+      local y = current.squares[i][2]
+      map[y][x] = 0
+      map[y][x-1] = 1
+      current.squares[i][1] = x - 1
+    end
+--  end
 end
 
 
 -------------------------------------
 -------------------------------------
--- updateMapRight = MOVES THE CURRENT SQUARE RIGHT
+-- updateMapRight = MOVES THE CURRENT SHAPE RIGHT
 -------------------------------------
 -------------------------------------
 function updateMapRight()
-  if (map[current.y][current.x + 1] == 0) then
-    map[current.y][current.x] = 0
-    current.x = current.x + 1
-    map[current.y][current.x] = 1
-  end
+--  local nb_pieces = 0
+  
+--  for i = 1, #current.squares do
+--    local x = current.squares[i][1]
+--    local y = current.squares[i][2]
+--    if map[y][x + 1] == 0 then
+--      nb_pieces = nb_pieces + 1
+--    end
+--  end
+  
+--  if (nb_pieces == #current.squares) then
+    for i = 1, #current.squares do
+      local x = current.squares[i][1]
+      local y = current.squares[i][2]
+      map[y][x] = 0
+      map[y][x+1] = 1
+      current.squares[i][1] = x + 1
+    end
+--  end
 end
 
 
 -------------------------------------
 -------------------------------------
--- updateMapBottom = MOVES THE CURRENT SQUARE BOTTOM
+-- updateMapBottom = MOVES THE CURRENT SHAPE STRAIGHT TO THE BOTTOM OF THE GRID
 -------------------------------------
 -------------------------------------
 function updateMapBottom()
-  if (map[#map][current.x] == 1) then
-    local y = findTopOfCol(current.x)
-    map[current.y][current.x] = 0
-    current.y = y
-    map[current.y][current.x] = 1
-  else
-    map[current.y][current.x] = 0
-    current.y = #map
-    map[current.y][current.x] = 1
+  while testMap(0, 1) do
+    updateMapDown()
   end
 end
 
@@ -363,4 +379,23 @@ function readOnlyTable(table)
                   end,
      __metatable = false
    });
+end
+
+-------------------------------------
+-------------------------------------
+-- debugPrintMatrix = PRINTS THE MATRIX FOR DEBUG
+-------------------------------------
+-------------------------------------
+function debugPrintMatrix()
+  local w, h
+  local string = "("
+  
+  for h=1,#map do
+    for w=1,#map[h] do
+      string = string .. tostring(map[h][w]) .. ", "
+    end
+    print(string .. ")")
+    string = "("
+  end
+  print("\n\n")
 end
