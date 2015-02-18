@@ -232,13 +232,16 @@ function newShape()
   
   local r = math.random(1,8)
   print("r = ", r)
-  current = Shapes[r]
+  print("Shapes r", Shapes[r])
+  current = deepCopy(Shapes[r])
   
   for i = 1, #current do
     local x = current[i][1]
     local y = current[i][2]
     map[y][x] = 2
   end
+  
+  debugPrintMatrix()
 end
 
 
@@ -248,12 +251,15 @@ end
 -------------------------------------
 -------------------------------------
 function updateMapDown()
-  for i = #current, 1, -1  do
+  for i = 1, #current  do
     local x = current[i][1]
     local y = current[i][2]
     map[y][x] = 0
-    map[y+1][x] = 2
     current[i][2] = y + 1
+  end
+  
+  for i = 1, #current do
+    map[current[i][2]][current[i][1]] = 2 
   end
 end
 
@@ -267,8 +273,12 @@ function updateMapLeft()
     local x = current[i][1]
     local y = current[i][2]
     map[y][x] = 0
-    map[y][x-1] = 2
+--    map[y][x-1] = 2
     current[i][1] = x - 1
+  end
+  
+  for i = 1, #current do
+    map[current[i][2]][current[i][1]] = 2 
   end
 end
 
@@ -279,12 +289,16 @@ end
 -------------------------------------
 -------------------------------------
 function updateMapRight()
-  for i = #current, 1, -1 do
+  for i = 1, #current do
     local x = current[i][1]
     local y = current[i][2]
     map[y][x] = 0
-    map[y][x+1] = 2
+--    map[y][x+1] = 2
     current[i][1] = x + 1
+  end
+  
+  for i = 1, #current do
+    map[current[i][2]][current[i][1]] = 2 
   end
 end
 
@@ -373,4 +387,18 @@ function debugPrintMatrix()
     string = "("
   end
   print("\n\n")
+end
+
+
+
+function deepCopy(original)
+    local copy = {}
+    for k, v in pairs(original) do
+        -- as before, but if we find a table, make sure we copy that too
+        if type(v) == 'table' then
+            v = deepCopy(v)
+        end
+        copy[k] = v
+    end
+    return copy
 end
