@@ -4,8 +4,29 @@
 -------------------------------------
 -------------------------------------
 function love.load()
+-- Shapes
+  Shapes = readOnlyTable {
+    LINE          = 1,
+    L             = 2,
+    RL            = 3,
+    SQUARE        = 4,
+    S             = 5,
+    Z             = 6,
+    T             = 7,
+    tiny          = 8,
+    otherstuff = {}
+  }
+  
+  
 --  squares = {}
-  current = {}
+  current = { 
+              shape = Shapes.tiny, 
+              x = 5, 
+              y = 1, 
+              squares = { 
+                          {5, 1} 
+                        }
+            }
   timer = 0
   
   -- 10*18
@@ -34,7 +55,7 @@ function love.load()
   window.x = 20
   window.y = 20
   
-  newSquare()
+  newTinySquare()
   
   love.window.setMode(440, 600, {resizable=true, vsync=false, minwidth=280, minheight=440})
 end
@@ -52,12 +73,12 @@ function love.update(dt)
   end
   
   if current.y == 18 then
-    newSquare()
+    newTinySquare()
   end
   
   if timer >= 1 then
     if next(current) ~= nil then
-      print("c.x", current.x, "c.y", current.y)
+      --print("c.x", current.x, "c.y", current.y)
       if testMap(0, 1) then
         updateMapDown()
       end
@@ -114,14 +135,32 @@ end
 function testMap(x, y)
     if next(current) == nil then
       return false
---      (map[current.y + y][current.x + x] == 1)
-    elseif  ((current.y + y) > #map) or
-            ((current.y + y) <= 0) or
-            ((current.x + x) > #map[#map]) or
-            ((current.x + x) <= 0) then
+    elseif next(current.squares) == nil then
       return false
+    else
+      return testMapPieces(x, y, current.squares)
     end
-    return true
+end
+
+-------------------------------------
+-------------------------------------
+-- testMapPieces = TESTS IF EACH SQUARES OF THE SHAPE WILL BE IN THE BOUNDARIES OF THE GRID
+-------------------------------------
+-------------------------------------
+function testMapPieces(x, y, pieces)
+  local nb_pieces = 0
+  
+  for i = 1, #pieces do
+    local px = pieces[i][1]
+    local py = pieces[i][2]
+    
+    if ((py + y) <= #map) and ((py + y) > 0) and
+      ((px + x) <= #map[#map]) and ((px + x) > 0) then
+        nb_pieces = nb_pieces + 1
+    end
+  end
+  
+  return (nb_pieces == #pieces)
 end
 
 -------------------------------------
@@ -136,7 +175,7 @@ function printLines()
   local mx = window.x*w
   local my = window.y*h
   
-  print("w", w, "h", h, "mx", mx, "my", my)
+  --print("w", w, "h", h, "mx", mx, "my", my)
   love.graphics.line(0, 0, 0, my)
   love.graphics.line(0, 0, mx, 0)
   love.graphics.line(0, my, mx, my)
@@ -163,28 +202,50 @@ end
 
 -------------------------------------
 -------------------------------------
--- newSquare = CREATES A NEW SQUARE ON TOP OF THE GRID
+-- newTinySquare = CREATES A NEW TINY SQUARE ON TOP OF THE GRID
 -------------------------------------
 -------------------------------------
-function newSquare()
-  current.x = 5
-  current.y = 1
-  map[current.y][current.x] = 1
+function newTinySquare()
+  current.shape = Shapes.tiny
+  current.squares = { {5, 1} }
+  
+  for i = 1, #current.squares do
+    local x = current.squares[i][1]
+    local y = current.squares[i][2]
+    map[y][x] = 1
+  end
 end
 
 -------------------------------------
 -------------------------------------
--- updateMapDown = MOVES THE CURRENT SQUARE DOWN
+-- updateMapDown = MOVES THE CURRENT SHAPE DOWN
 -------------------------------------
 -------------------------------------
 function updateMapDown()
-  if (map[current.y + 1][current.x] == 1) then
-    newSquare()
-  else
-    map[current.y][current.x] = 0
-    current.y = current.y + 1
-    map[current.y][current.x] = 1
+  for i = 1, #current.squares do
+    local x = current.squares[i][1]
+    local y = current.squares[i][2]
+    if map[y][x] == 1 then
+      newTinySquare()
+      return
   end
+  
+  for i = 1, #current.squares do
+    local x = current.squares[i][1]
+    local y = current.squares[i][2]
+    map[y][x] = 0
+    map[y+1][x] = 1
+    current.squares[i][2] = y + 1
+  end
+  
+  
+--  if (map[current.y + 1][current.x] == 1) then
+--    newTinySquare()
+--  else
+--    map[current.y][current.x] = 0
+--    current.y = current.y + 1
+--    map[current.y][current.x] = 1
+--  end
 end
 
 -------------------------------------
@@ -286,5 +347,20 @@ function updateGrid()
     end
   end
   
-  newSquare()
+  newTinySquare()
+end
+
+-------------------------------------
+-------------------------------------
+-- readOnlyTable = Makes the tablemap readyonly as a structure
+-------------------------------------
+-------------------------------------
+function readOnlyTable(table)
+   return setmetatable({}, {
+     __index = table,
+     __newindex = function(table, key, value)
+                    error("Attempt to modify read-only table")
+                  end,
+     __metatable = false
+   });
 end
