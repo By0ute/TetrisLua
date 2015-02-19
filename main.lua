@@ -106,11 +106,11 @@ function love.update(dt)
 --    updateGrid()
 --  end
 
-  local res_lines = checkForLine()
+--  local res_lines = checkForLine()
   
-  if next(res_lines) ~= nil then
-    updateGrid(res_lines)
-  end
+--  if next(res_lines) ~= nil then
+--    updateGrid(res_lines)
+--  end
   
   if timer >= 1 then
 --    debugPrintMatrix()
@@ -118,7 +118,14 @@ function love.update(dt)
       if testMap(0, 1) then
         updateMapDown()
       else
-        newShape()
+        local res_lines = checkForLine()
+  
+        if next(res_lines) ~= nil then
+          updateGrid(res_lines)
+          newShape(false)
+        else
+          newShape(true)
+        end
       end
     end
     timer = 0
@@ -230,13 +237,15 @@ function printGrid()
 end
 
 
-function newShape()
+function newShape(reset)
   local i
   
-  for i = 1, #current do
-    local x = current[i][1]
-    local y = current[i][2]
-    map[y][x] = 1
+  if (reset) then
+    for i = 1, #current do
+      local x = current[i][1]
+      local y = current[i][2]
+      map[y][x] = 1
+    end
   end
 
   current = deepCopy(Shapes[math.random(1,8)])
@@ -246,8 +255,6 @@ function newShape()
     local y = current[i][2]
     map[y][x] = 2
   end
-  
---  debugPrintMatrix()
 end
 
 
@@ -355,7 +362,7 @@ function checkForLine()
     nb_pixels = 0
     
     for w=1,#map[#map] do
-      if map[h][w] == 1 then
+      if map[h][w] ~= 0 then
         nb_pixels = nb_pixels + 1
       end
     end
@@ -374,6 +381,14 @@ end
 -------------------------------------
 -------------------------------------
 function updateGrid(res_lines)
+  local i, k, v
+ 
+  for i = 1, #current do
+    local x = current[i][1]
+    local y = current[i][2]
+    map[y][x] = 1
+  end
+  
   for k, v in pairs(res_lines) do
     local line = v
     local h, w
@@ -382,31 +397,16 @@ function updateGrid(res_lines)
       map[line][w] = 0
     end
     
-    for h=line,1,-1 do
+    for h=line,2,-1 do
       for w=1,#map[#map] do
         map[h][w] = map[h-1][w]
       end
-    end    
-  end
-  
---  local h, w
+    end
     
---  for w=1,#map[#map],1 do
---    map[#map][w] = 0
---  end
-  
---  local point
-  
---  for h=#map-1,1,-1 do
---    for w=#map[h],1,-1 do
---      if (map[h][w] == 1) then
---        map[h][w] = 0
---        map[h+1][w] = 1
---      end
---    end
---  end
-
-  newShape()
+    for w=1,#map[#map] do
+      map[1][w] = 0
+    end
+  end
 end
 
 -------------------------------------
