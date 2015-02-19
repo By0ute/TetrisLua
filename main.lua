@@ -112,15 +112,13 @@ function love.update(dt)
     updateGrid(res_lines)
   end
   
-  if not testMap(0,1) then
-    newShape()
-  end
-  
   if timer >= 1 then
 --    debugPrintMatrix()
     if next(current) ~= nil then
       if testMap(0, 1) then
         updateMapDown()
+      else
+        newShape()
       end
     end
     timer = 0
