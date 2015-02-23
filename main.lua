@@ -57,9 +57,65 @@ function love.load()
     }, -- tiny (1 pixel)
   }
   
+-- ROTATIONS
+  Rotations = 
+  {
+    {
+      {{2,-2}, {1,-1}, {0,0}, {-1,1}},
+      {{-2,2}, {-1,1}, {0,0}, {1,-1}},
+      {{1,1}, {0,0}, {-1,-1}, {-2,-2}},
+      {{-1,-1}, {0,0}, {1,1}, {2,2}}
+    }, -- I
+    {
+      {{1,1}, {0,0}, {-1,-1}, {-2,0}},
+      {{1,-1}, {0,0}, {-1,1}, {0,2}},
+      {{-1,-1}, {0,0}, {1,1}, {2,0}},
+      {{-1,1}, {0,0}, {1,-1}, {0,-2}}
+    }, -- L
+    {
+      {{2,0}, {1,-1}, {0,0}, {-1,1}},
+      {{0,2}, {1,1}, {0,0}, {-1,-1}},
+      {{-2,0}, {-1,1}, {0,0}, {1,-1}},
+      {{0,-2}, {-1,-1}, {0,0}, {1,1}}
+    }, -- RL
+    {
+      {{0,0}, {0,0}, {0,0}, {0,0}},
+      {{0,0}, {0,0}, {0,0}, {0,0}},
+      {{0,0}, {0,0}, {0,0}, {0,0}},
+      {{0,0}, {0,0}, {0,0}, {0,0}}
+    }, -- O
+    {
+      {{1,1}, {0,0}, {-1,1}, {-2,0}},
+      {{1,-1}, {0,0}, {1,1}, {0,2}},
+      {{0,2}, {1,1}, {0,0}, {1,-1}},
+      {{-2,0}, {-1,1}, {0,0}, {1,1}}
+    }, -- S
+    {
+      {{2,0}, {1,1}, {0,0}, {-1,1}},
+      {{-1,1}, {0,0}, {1,1}, {2,0}},
+      {{0,2}, {-1,1}, {0,0}, {-1,-1}},
+      {{-1,-1}, {0,0}, {-1,1}, {0,2}}
+    }, -- Z
+    {
+      {{1,-1}, {1,1}, {0,0}, {-1,1}},
+      {{1,1}, {-1,1}, {0,0}, {-1,-1}},
+      {{-1,1}, {-1,-1}, {0,0}, {1,-1}},
+      {{-1,-1}, {1,-1}, {0,0}, {1,1}}
+    }, -- T
+    {
+      {{0,0}},
+      {{0,0}},
+      {{0,0}},
+      {{0,0}}
+    } -- tiny
+  }
+  
 -- THE current Shape
   current = {}
+  shape_number = 0
   timer = 0
+  score = 0
+  rotation_state = 0
   
   -- 10*18
   map = {
@@ -83,7 +139,6 @@ function love.load()
       { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
   }
   
-  print("#map", #map, "#map[#map]", #map[#map])
   
   window = {}
   window.x = 20
@@ -102,18 +157,7 @@ end
 function love.update(dt)
   timer = timer + dt
   
---  if (madeALine()) then
---    updateGrid()
---  end
-
---  local res_lines = checkForLine()
-  
---  if next(res_lines) ~= nil then
---    updateGrid(res_lines)
---  end
-  
   if timer >= 1 then
---    debugPrintMatrix()
     if next(current) ~= nil then
       if testMap(0, 1) then
         updateMapDown()
@@ -168,6 +212,8 @@ function love.keypressed(key)
       end
     elseif key == " " then
       updateMapBottom()
+    elseif key == "up" then
+      rotateShape()
     end
   end
 end
@@ -236,6 +282,9 @@ function printGrid()
   end
 end
 
+function gameOver()
+end
+
 
 function newShape(reset)
   local i
@@ -248,12 +297,20 @@ function newShape(reset)
     end
   end
 
-  current = deepCopy(Shapes[math.random(1,8)])
+  rotation_state = 0
+  shape_number = math.random(1,8)
+  current = deepCopy(Shapes[shape_number])
   
   for i = 1, #current do
     local x = current[i][1]
     local y = current[i][2]
-    map[y][x] = 2
+    
+    if map[y][x] == 1 then
+      print("SCORE : ", score)
+      love.event.quit()
+    else
+      map[y][x] = 2
+    end
   end
 end
 
@@ -333,20 +390,55 @@ function updateMapBottom()
   end
 end
 
----------------------------------------
----------------------------------------
----- findTopOfCol = STACKS SQUARE ON TOP OF OTHERS IF SO
----------------------------------------
----------------------------------------
---function findTopOfCol(x)
---  local i
---  for i=#map,1,-1 do
---    if map[i][x] == 0 then
---      return i
---    end
---  end
---  return 1
---end
+
+function rotateShape()
+  local rotated_shape = deepCopy(current)
+  
+  local rotation = Rotations[shape_number][rotation_state+1]
+  local i
+  
+  for i=1,#rotated_shape do
+    rotated_shape[i][1] = rotated_shape[i][1] + rotation[i][1]
+    rotated_shape[i][2] = rotated_shape[i][2] + rotation[i][2]
+  end
+  
+  if gridOccupied(rotated_shape) == false then
+    updateRotatedGrid(rotated_shape)
+  end  
+end
+
+function gridOccupied(shape)  
+  for k, v in pairs(shape) do
+    local h = v[2]
+    local w = v[1]
+    
+    if (h < 1) or (w < 1) or (h > #map) or (w > #map[#map]) or map[h][w] == 1 then
+      return true
+    end
+  end
+  
+  return false
+end
+
+function updateRotatedGrid(rotated_shape)
+  for i = 1, #current do
+    local x = current[i][1]
+    local y = current[i][2]
+    map[y][x] = 0
+  end
+  
+  for i = 1, #rotated_shape do
+    local x = rotated_shape[i][1]
+    local y = rotated_shape[i][2]
+    map[y][x] = 2
+  end
+  
+  current = rotated_shape
+  rotation_state = (rotation_state + 1) % 4
+end
+
+
+
 
 -------------------------------------
 -------------------------------------
@@ -406,6 +498,8 @@ function updateGrid(res_lines)
     for w=1,#map[#map] do
       map[1][w] = 0
     end
+    
+    score = score + 1
   end
 end
 
