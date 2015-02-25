@@ -4,6 +4,7 @@
 -------------------------------------
 -------------------------------------
 function love.load()
+  print("love.load")
 -- make the game working
   game_on = false
   
@@ -182,13 +183,12 @@ function love.load()
   window = {}
   window.x = 20
   window.y = 20
-  
---  newShape()
-  
+    
   love.window.setMode(440, 600, {resizable=true, vsync=false, minwidth=280, minheight=440})
 end
 
 function resetGame()
+  print("resetGame")
   current = {}
   shape_number = 0
   timer = 0
@@ -249,6 +249,7 @@ end
 -------------------------------------
 -------------------------------------
 function love.update(dt)
+  print("love.update")
   if (game_on == true) then
     timer = timer + dt
     
@@ -278,6 +279,7 @@ end
 -------------------------------------
 -------------------------------------
 function love.draw()
+  print("love.draw")
   love.graphics.setBackgroundColor(100,100,100,255)
   
   -- squares
@@ -293,9 +295,10 @@ end
 -------------------------------------
 -------------------------------------
 function love.keypressed(key)
+  print("love.keypressed")
   if (game_on == false) and (key == " ") then
     game_on = true
-    newShape()  
+    newShape(false)  
   elseif next(current) ~= nil then
     if key == "down" then
       if testMap(0, 1) then
@@ -323,6 +326,7 @@ end
 -------------------------------------
 -------------------------------------
 function testMap(x, y)
+  print("testMap")
   if next(current) == nil then
     return false
   else
@@ -351,6 +355,7 @@ end
 -------------------------------------
 -------------------------------------
 function printLines()
+  print("printLines")
   love.graphics.setColor(0,0,0,255)
   local h = #map
   local w = #map[#map]
@@ -369,9 +374,7 @@ end
 -------------------------------------
 -------------------------------------
 function printGrid()
---  local c = {255,0,0,255}
-----  love.graphics.setColor(255,0,127,255)
---  love.graphics.setColor(c)
+  print("printGrid")
   local w, h
   
   for h=1,#map,1 do
@@ -385,10 +388,12 @@ function printGrid()
 end
 
 function gameOver()
+  print("gameOver")
 end
 
 
 function newShape(reset)
+  print("newShape")
   local i
   
   if (reset) then
@@ -412,6 +417,7 @@ function newShape(reset)
       print("SCORE : ", score)
       game_on = false
       resetGame()
+      return
     else
       map[y][x] = 2
       colors_map[y][x] = color
@@ -426,6 +432,7 @@ end
 -------------------------------------
 -------------------------------------
 function updateMapDown()
+  print("upMapDown")
   local i 
   
   for i = 1, #current  do
@@ -450,6 +457,7 @@ end
 -------------------------------------
 -------------------------------------
 function updateMapLeft()
+  print("upMapLeft")
   local i
   
   for i = 1, #current do
@@ -475,6 +483,7 @@ end
 -------------------------------------
 -------------------------------------
 function updateMapRight()
+  print("upMapRight")
   local i
   
   for i = 1, #current do
@@ -500,6 +509,7 @@ end
 -------------------------------------
 -------------------------------------
 function updateMapBottom()
+  print("upMapBottom")
   while testMap(0, 1) do
     updateMapDown()
   end
@@ -507,6 +517,7 @@ end
 
 
 function rotateShape()
+  print("rotateShape")
   local rotated_shape = deepCopy(current)
   
   local rotation = Rotations[shape_number][rotation_state+1]
@@ -522,7 +533,8 @@ function rotateShape()
   end  
 end
 
-function gridOccupied(shape)  
+function gridOccupied(shape) 
+  print("gridOccupied")
   for k, v in pairs(shape) do
     local h = v[2]
     local w = v[1]
@@ -536,6 +548,7 @@ function gridOccupied(shape)
 end
 
 function updateRotatedGrid(rotated_shape)
+  print("upRotatedGrid")
   for i = 1, #current do
     local x = current[i][1]
     local y = current[i][2]
@@ -563,6 +576,7 @@ end
 -------------------------------------
 -------------------------------------
 function checkForLine()
+  print("checkForLine")
   local h, w
   local nb_pixels = 0
   local res_lines = {}
@@ -590,6 +604,7 @@ end
 -------------------------------------
 -------------------------------------
 function updateGrid(res_lines)
+  print("updateGrid")
   local i, k, v
  
   for i = 1, #current do
@@ -629,6 +644,7 @@ end
 -------------------------------------
 -------------------------------------
 function debugPrintMatrix()
+  print("debugPrintMatrix")
   local w, h
   local string = "("
   
@@ -644,9 +660,9 @@ end
 
 
 function deepCopy(original)
+  print("deepCopy")
     local copy = {}
     for k, v in pairs(original) do
-        -- as before, but if we find a table, make sure we copy that too
         if type(v) == 'table' then
             v = deepCopy(v)
         end
