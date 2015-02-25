@@ -4,7 +4,6 @@
 -------------------------------------
 -------------------------------------
 function love.load()
-  print("love.load")
 -- make the game working
   game_on = false
   
@@ -180,15 +179,12 @@ function love.load()
   }
   
   
-  window = {}
-  window.x = 20
-  window.y = 20
+  window = {x = 20, y = 20}
     
   love.window.setMode(440, 600, {resizable=true, vsync=false, minwidth=280, minheight=440})
 end
 
 function resetGame()
-  print("resetGame")
   current = {}
   shape_number = 0
   timer = 0
@@ -249,7 +245,6 @@ end
 -------------------------------------
 -------------------------------------
 function love.update(dt)
-  print("love.update")
   if (game_on == true) then
     timer = timer + dt
     
@@ -279,7 +274,6 @@ end
 -------------------------------------
 -------------------------------------
 function love.draw()
-  print("love.draw")
   love.graphics.setBackgroundColor(100,100,100,255)
   
   -- squares
@@ -287,6 +281,12 @@ function love.draw()
   
   -- grid
   printLines()
+  
+  -- score
+  printScore()
+  
+  -- print next piece
+  printNextPiece()
 end
 
 -------------------------------------
@@ -295,10 +295,11 @@ end
 -------------------------------------
 -------------------------------------
 function love.keypressed(key)
-  print("love.keypressed")
   if (game_on == false) and (key == " ") then
     game_on = true
-    newShape(false)  
+    newShape(false)
+  elseif (game_on == false) and (key == 'p') then
+    game_on = true
   elseif next(current) ~= nil then
     if key == "down" then
       if testMap(0, 1) then
@@ -316,6 +317,8 @@ function love.keypressed(key)
       updateMapBottom()
     elseif key == "up" then
       rotateShape()
+    elseif key == "p" then
+      game_on = false
     end
   end
 end
@@ -326,7 +329,6 @@ end
 -------------------------------------
 -------------------------------------
 function testMap(x, y)
-  print("testMap")
   if next(current) == nil then
     return false
   else
@@ -355,17 +357,19 @@ end
 -------------------------------------
 -------------------------------------
 function printLines()
-  print("printLines")
   love.graphics.setColor(0,0,0,255)
   local h = #map
   local w = #map[#map]
-  local mx = window.x*w
-  local my = window.y*h
+  local x = window.x
+  local y = window.y
+  local mx = x*(w+1)
+  local my = y*(h+1)
+
   
-  love.graphics.line(0, 0, 0, my)
-  love.graphics.line(0, 0, mx, 0)
-  love.graphics.line(0, my, mx, my)
-  love.graphics.line(mx, 0, mx, my)
+  love.graphics.line(x, y, x, my)
+  love.graphics.line(x, y, mx, y)
+  love.graphics.line(x, my, mx, my)
+  love.graphics.line(mx, y, mx, my)
 end
 
 -------------------------------------
@@ -374,26 +378,81 @@ end
 -------------------------------------
 -------------------------------------
 function printGrid()
-  print("printGrid")
   local w, h
   
   for h=1,#map,1 do
     for w=1,#map[h] do
       if (map[h][w] ~= 0) then
         love.graphics.setColor(colors_map[h][w])
-        love.graphics.rectangle("fill", (w - 1) * window.x, (h - 1) * window.y, window.x, window.y)
+        love.graphics.rectangle("fill", w * window.x, h * window.y, window.x, window.y)
       end
     end
   end
 end
 
+function printScore()
+  love.graphics.setColor(0,0,0,255)
+  local h = #map
+  local w = #map[#map]
+  local x = window.x * (w + 2)
+  local y = window.x
+  local mx = x + ((w*window.x) / 2)
+  local my = y + ((w*window.x) / 2)
+
+  
+  love.graphics.line(x, y, x, my)
+  love.graphics.line(x, y, mx, y)
+  love.graphics.line(x, my, mx, my)
+  love.graphics.line(mx, y, mx, my)
+  
+  local offset = calculateOffset(score)
+  love.graphics.setColor(255, 255, 0, 255)
+  love.graphics.print(tostring(score), (x+mx-window.x)/2, (my)/2, 0, 2, 2, offset, 0)
+end
+
+function printNextPiece()
+  love.graphics.setColor(0,0,0,255)
+  local h = #map
+  local w = #map[#map]
+  local x = window.x * (w + 2)
+  local y = window.x * (w + 4) / 2
+  local mx = x + ((w*window.x) / 2)
+  local my = y + ((w*window.x) / 2)
+  
+  love.graphics.line(x, y, x, my)
+  love.graphics.line(x, y, mx, y)
+  love.graphics.line(x, my, mx, my)
+  love.graphics.line(mx, y, mx, my)
+  
+  local piece = deepCopy(Shapes[3])
+  local col = Colors[3]
+  love.graphics.setColor(col)
+  local i
+  for i=1,#piece do
+    local xx = piece[i][1] - 3
+    local yy = piece[i][2]    
+    love.graphics.rectangle("fill", x + xx * window.x, y + yy * window.y, window.x, window.y)
+  end
+end
+
+function calculateOffset(score)
+  if (score < 10) then
+    return 0
+  else
+    local result = 2
+    local s = score / 10
+    while s >= 10 do
+      result = result + 2
+      s = s / 10
+    end
+  end
+end
+
 function gameOver()
-  print("gameOver")
 end
 
 
 function newShape(reset)
-  print("newShape")
   local i
   
   if (reset) then
@@ -432,7 +491,6 @@ end
 -------------------------------------
 -------------------------------------
 function updateMapDown()
-  print("upMapDown")
   local i 
   
   for i = 1, #current  do
@@ -457,7 +515,6 @@ end
 -------------------------------------
 -------------------------------------
 function updateMapLeft()
-  print("upMapLeft")
   local i
   
   for i = 1, #current do
@@ -483,7 +540,6 @@ end
 -------------------------------------
 -------------------------------------
 function updateMapRight()
-  print("upMapRight")
   local i
   
   for i = 1, #current do
@@ -509,7 +565,6 @@ end
 -------------------------------------
 -------------------------------------
 function updateMapBottom()
-  print("upMapBottom")
   while testMap(0, 1) do
     updateMapDown()
   end
@@ -517,7 +572,6 @@ end
 
 
 function rotateShape()
-  print("rotateShape")
   local rotated_shape = deepCopy(current)
   
   local rotation = Rotations[shape_number][rotation_state+1]
@@ -534,7 +588,6 @@ function rotateShape()
 end
 
 function gridOccupied(shape) 
-  print("gridOccupied")
   for k, v in pairs(shape) do
     local h = v[2]
     local w = v[1]
@@ -548,7 +601,6 @@ function gridOccupied(shape)
 end
 
 function updateRotatedGrid(rotated_shape)
-  print("upRotatedGrid")
   for i = 1, #current do
     local x = current[i][1]
     local y = current[i][2]
@@ -576,7 +628,6 @@ end
 -------------------------------------
 -------------------------------------
 function checkForLine()
-  print("checkForLine")
   local h, w
   local nb_pixels = 0
   local res_lines = {}
@@ -604,7 +655,6 @@ end
 -------------------------------------
 -------------------------------------
 function updateGrid(res_lines)
-  print("updateGrid")
   local i, k, v
  
   for i = 1, #current do
@@ -644,7 +694,6 @@ end
 -------------------------------------
 -------------------------------------
 function debugPrintMatrix()
-  print("debugPrintMatrix")
   local w, h
   local string = "("
   
@@ -660,7 +709,6 @@ end
 
 
 function deepCopy(original)
-  print("deepCopy")
     local copy = {}
     for k, v in pairs(original) do
         if type(v) == 'table' then
