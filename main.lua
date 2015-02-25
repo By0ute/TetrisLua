@@ -127,12 +127,13 @@ function love.load()
   }
   
 -- THE current Shape
-  current = {}
-  shape_number = 0
+  current = {pts = {}, nb = {}, rot_state = {}}
+  next_shape = {pts = {}, nb = 0}
+--  shape_number = 0
   timer = 0
   score = 0
-  rotation_state = 0
-  color = {0,0,0,0}
+--  rotation_state = 0
+--  color = {0,0,0,0}
   
   -- 10*18
   map = {
@@ -185,12 +186,13 @@ function love.load()
 end
 
 function resetGame()
-  current = {}
-  shape_number = 0
+  current = {pts = {}, nb = {}, rot_state = {}}
+  next_shape = {pts = {}, nb = 0}
+--  shape_number = 0
   timer = 0
   score = 0
-  rotation_state = 0
-  color = {0,0,0,0}
+--  rotation_state = 0
+--  color = {0,0,0,0}
   
   -- 10*18
   map = {
@@ -249,7 +251,7 @@ function love.update(dt)
     timer = timer + dt
     
     if timer >= 1 then
-      if next(current) ~= nil then
+      if next(current.pts) ~= nil then
         if testMap(0, 1) then
           updateMapDown()
         else
@@ -329,15 +331,15 @@ end
 -------------------------------------
 -------------------------------------
 function testMap(x, y)
-  if next(current) == nil then
+  if next(current.pts) == nil then
     return false
   else
     local i
     local nb_pieces = 0
     
-    for i = 1, #current do
-      local px = current[i][1]
-      local py = current[i][2]
+    for i = 1, #current.pts do
+      local px = current.pts[i][1]
+      local py = current.pts[i][2]
       
       if ((py + y) <= #map) and ((py + y) > 0) and
         ((px + x) <= #map[#map]) and ((px + x) > 0) then
@@ -347,7 +349,7 @@ function testMap(x, y)
       end
     end
     
-    return (nb_pieces == #current)
+    return (nb_pieces == #current.pts)
   end
 end
 
@@ -456,21 +458,21 @@ function newShape(reset)
   local i
   
   if (reset) then
-    for i = 1, #current do
-      local x = current[i][1]
-      local y = current[i][2]
+    for i = 1, #current.pts do
+      local x = current.pts[i][1]
+      local y = current.pts[i][2]
       map[y][x] = 1
     end
   end
 
-  rotation_state = 0
-  shape_number = math.random(1,8)
-  current = deepCopy(Shapes[shape_number])
-  color = Colors[shape_number]
+--  rotation_state = 0
+  local shape_number = math.random(1,8)
+  current = {pts = deepCopy(Shapes[shape_number]), nb = shape_number, rot_state = 0}
+--  color = Colors[shape_number]
   
-  for i = 1, #current do
-    local x = current[i][1]
-    local y = current[i][2]
+  for i = 1, #current.pts do
+    local x = current.pts[i][1]
+    local y = current.pts[i][2]
     
     if map[y][x] == 1 then
       print("SCORE : ", score)
@@ -479,7 +481,7 @@ function newShape(reset)
       return
     else
       map[y][x] = 2
-      colors_map[y][x] = color
+      colors_map[y][x] = Colors[current.nb]
     end
   end
 end
@@ -493,19 +495,19 @@ end
 function updateMapDown()
   local i 
   
-  for i = 1, #current  do
-    local x = current[i][1]
-    local y = current[i][2]
+  for i = 1, #current.pts  do
+    local x = current.pts[i][1]
+    local y = current.pts[i][2]
     map[y][x] = 0
     colors_map[y][x] = {0,0,0,0}
-    current[i][2] = y + 1
+    current.pts[i][2] = y + 1
   end
   
-  for i = 1, #current do
-    local x = current[i][1]
-    local y = current[i][2]
+  for i = 1, #current.pts do
+    local x = current.pts[i][1]
+    local y = current.pts[i][2]
     map[y][x] = 2 
-    colors_map[y][x] = color 
+    colors_map[y][x] = Colors[current.nb] 
   end
 end
 
@@ -517,19 +519,19 @@ end
 function updateMapLeft()
   local i
   
-  for i = 1, #current do
-    local x = current[i][1]
-    local y = current[i][2]
+  for i = 1, #current.pts do
+    local x = current.pts[i][1]
+    local y = current.pts[i][2]
     map[y][x] = 0
     colors_map[y][x] = {0,0,0,0}
-    current[i][1] = x - 1
+    current.pts[i][1] = x - 1
   end
   
-  for i = 1, #current do
-    local x = current[i][1]
-    local y = current[i][2]
+  for i = 1, #current.pts do
+    local x = current.pts[i][1]
+    local y = current.pts[i][2]
     map[y][x] = 2 
-    colors_map[y][x] = color 
+    colors_map[y][x] = Colors[current.nb] 
   end
 end
 
@@ -542,19 +544,19 @@ end
 function updateMapRight()
   local i
   
-  for i = 1, #current do
-    local x = current[i][1]
-    local y = current[i][2]
+  for i = 1, #current.pts do
+    local x = current.pts[i][1]
+    local y = current.pts[i][2]
     map[y][x] = 0
     colors_map[y][x] = {0,0,0,0}
-    current[i][1] = x + 1
+    current.pts[i][1] = x + 1
   end
   
-  for i = 1, #current do
-    local x = current[i][1]
-    local y = current[i][2]
+  for i = 1, #current.pts do
+    local x = current.pts[i][1]
+    local y = current.pts[i][2]
     map[y][x] = 2 
-    colors_map[y][x] = color 
+    colors_map[y][x] = Colors[current.nb] 
   end
 end
 
@@ -572,9 +574,10 @@ end
 
 
 function rotateShape()
-  local rotated_shape = deepCopy(current)
+  local rotated_shape = deepCopy(current.pts)
   
-  local rotation = Rotations[shape_number][rotation_state+1]
+--  local rotation = Rotations[shape_number][rotation_state+1]
+  local rotation = Rotations[current.nb][current.rot_state+1]
   local i
   
   for i=1,#rotated_shape do
@@ -601,9 +604,9 @@ function gridOccupied(shape)
 end
 
 function updateRotatedGrid(rotated_shape)
-  for i = 1, #current do
-    local x = current[i][1]
-    local y = current[i][2]
+  for i = 1, #current.pts do
+    local x = current.pts[i][1]
+    local y = current.pts[i][2]
     map[y][x] = 0
     colors_map[y][x] = {0,0,0,0}
   end
@@ -612,11 +615,11 @@ function updateRotatedGrid(rotated_shape)
     local x = rotated_shape[i][1]
     local y = rotated_shape[i][2]
     map[y][x] = 2
-    colors_map[y][x] = color
+    colors_map[y][x] = Colors[current.nb]
   end
   
-  current = rotated_shape
-  rotation_state = (rotation_state + 1) % 4
+  current.pts = rotated_shape
+  current.rot_state = (current.rot_state + 1) % 4
 end
 
 
@@ -657,9 +660,9 @@ end
 function updateGrid(res_lines)
   local i, k, v
  
-  for i = 1, #current do
-    local x = current[i][1]
-    local y = current[i][2]
+  for i = 1, #current.pts do
+    local x = current.pts[i][1]
+    local y = current.pts[i][2]
     map[y][x] = 1
   end
   
