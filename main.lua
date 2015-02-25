@@ -179,7 +179,7 @@ function love.load()
   
   window = {x = 20, y = 20}
     
-  love.window.setMode(440, 600, {resizable=true, vsync=false, minwidth=280, minheight=440})
+  love.window.setMode(360, 400, {resizable=false})
 end
 
 function resetGame()
@@ -271,6 +271,9 @@ end
 -------------------------------------
 function love.draw()
   love.graphics.setBackgroundColor(100,100,100,255)
+  
+  -- controls
+  printControls()
   
   -- squares
   printGrid()
@@ -432,6 +435,33 @@ function printNextShape()
     end
   end
 end
+
+function printControls()
+  local h = #map
+  local w = #map[#map]
+  local x = window.x * (w + 2)
+  local y = window.x * (w + 4) / 2
+  local mx = x + ((w*window.x) / 2)
+  local my = y + ((w*window.x) / 2)
+  
+  love.graphics.setColor(255, 0, 0, 255)
+  love.graphics.print("<-", x, my + window.x)
+  love.graphics.print("->", x, my + window.x*2)
+  love.graphics.print("^", x, my + window.x*3)
+  love.graphics.print("v", x, my + window.x*4)
+  love.graphics.print("SPACE", x, my + window.x*5)
+  love.graphics.print("P", x, my + window.x*6)
+  
+  local xx = x + window.x * 2.5
+  love.graphics.setColor(0, 0, 0, 255)
+  love.graphics.print("Go left", xx, my + window.x)
+  love.graphics.print("Go Right", xx, my + window.x*2)
+  love.graphics.print("Go Up", xx, my + window.x*3)
+  love.graphics.print("Go Down", xx, my + window.x*4)
+  love.graphics.print("Go Bottom", xx, my + window.x*5)
+  love.graphics.print("Pause", xx, my + window.x*6)
+end
+
 
 function calculateOffset(score)
   if (score < 10) then
