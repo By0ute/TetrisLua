@@ -127,13 +127,10 @@ function love.load()
   }
   
 -- THE current Shape
-  current = {pts = {}, nb = {}, rot_state = {}}
-  next_shape = {pts = {}, nb = 0}
---  shape_number = 0
+  current = {pts = {}, nb = 0, rot_state = 0}
+  next_nb = 0
   timer = 0
   score = 0
---  rotation_state = 0
---  color = {0,0,0,0}
   
   -- 10*18
   map = {
@@ -186,13 +183,10 @@ function love.load()
 end
 
 function resetGame()
-  current = {pts = {}, nb = {}, rot_state = {}}
-  next_shape = {pts = {}, nb = 0}
---  shape_number = 0
+  current = {pts = {}, nb = 0, rot_state = 0}
+  next_nb = 0
   timer = 0
   score = 0
---  rotation_state = 0
---  color = {0,0,0,0}
   
   -- 10*18
   map = {
@@ -287,8 +281,8 @@ function love.draw()
   -- score
   printScore()
   
-  -- print next piece
-  printNextPiece()
+  -- print next shape
+  printNextShape()
 end
 
 -------------------------------------
@@ -412,7 +406,7 @@ function printScore()
   love.graphics.print(tostring(score), (x+mx-window.x)/2, (my)/2, 0, 2, 2, offset, 0)
 end
 
-function printNextPiece()
+function printNextShape()
   love.graphics.setColor(0,0,0,255)
   local h = #map
   local w = #map[#map]
@@ -426,14 +420,16 @@ function printNextPiece()
   love.graphics.line(x, my, mx, my)
   love.graphics.line(mx, y, mx, my)
   
-  local piece = deepCopy(Shapes[3])
-  local col = Colors[3]
-  love.graphics.setColor(col)
-  local i
-  for i=1,#piece do
-    local xx = piece[i][1] - 3
-    local yy = piece[i][2]    
-    love.graphics.rectangle("fill", x + xx * window.x, y + yy * window.y, window.x, window.y)
+  if (next_nb ~= 0) then
+    local shape = deepCopy(Shapes[next_nb])
+    local col = Colors[next_nb]
+    love.graphics.setColor(col)
+    local i
+    for i=1,#shape do
+      local xx = shape[i][1] - 3
+      local yy = shape[i][2]    
+      love.graphics.rectangle("fill", x + xx * window.x, y + yy * window.y, window.x, window.y)
+    end
   end
 end
 
@@ -465,10 +461,15 @@ function newShape(reset)
     end
   end
 
---  rotation_state = 0
   local shape_number = math.random(1,8)
-  current = {pts = deepCopy(Shapes[shape_number]), nb = shape_number, rot_state = 0}
---  color = Colors[shape_number]
+  
+  if (next_nb ~= 0) then
+    current = {pts = deepCopy(Shapes[next_nb]), nb = next_nb, rot_state = 0}
+    next_nb = shape_number
+  else  
+    current = {pts = deepCopy(Shapes[shape_number]), nb = shape_number, rot_state = 0}
+    next_nb = math.random(1,8)
+  end
   
   for i = 1, #current.pts do
     local x = current.pts[i][1]
