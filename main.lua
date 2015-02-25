@@ -4,8 +4,24 @@
 -------------------------------------
 -------------------------------------
 function love.load()
+-- make the game working
+  game_on = false
+  
 -- Random seed
   math.randomseed(os.time())
+  
+-- Colors
+  Colors =
+  {
+    {0,200,200,255}, -- I
+    {255,128,0,255}, -- L
+    {0,0,255,255}, -- RL
+    {255,255,0,255}, -- O
+    {255,0,0,255}, -- Z
+    {0,255,0,255}, -- S
+    {255,0,127,255}, -- T
+    {255,255,255,255} -- tiny
+  }
   
 -- Shapes
   Shapes = 
@@ -116,9 +132,32 @@ function love.load()
   timer = 0
   score = 0
   rotation_state = 0
+  color = {0,0,0,0}
   
   -- 10*18
   map = {
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+  }
+  
+  -- 10*18
+  colors_map = {
       { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
       { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
       { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
@@ -144,10 +183,65 @@ function love.load()
   window.x = 20
   window.y = 20
   
-  newShape()
+--  newShape()
   
   love.window.setMode(440, 600, {resizable=true, vsync=false, minwidth=280, minheight=440})
 end
+
+function resetGame()
+  current = {}
+  shape_number = 0
+  timer = 0
+  score = 0
+  rotation_state = 0
+  color = {0,0,0,0}
+  
+  -- 10*18
+  map = {
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+  }  
+  
+  -- 10*18
+  colors_map = {
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
+  }
+  
+end
+
 
 -------------------------------------
 -------------------------------------
@@ -155,25 +249,27 @@ end
 -------------------------------------
 -------------------------------------
 function love.update(dt)
-  timer = timer + dt
-  
-  if timer >= 1 then
-    if next(current) ~= nil then
-      if testMap(0, 1) then
-        updateMapDown()
-      else
-        local res_lines = checkForLine()
-  
-        if next(res_lines) ~= nil then
-          updateGrid(res_lines)
-          newShape(false)
+  if (game_on == true) then
+    timer = timer + dt
+    
+    if timer >= 1 then
+      if next(current) ~= nil then
+        if testMap(0, 1) then
+          updateMapDown()
         else
-          newShape(true)
+          local res_lines = checkForLine()
+    
+          if next(res_lines) ~= nil then
+            updateGrid(res_lines)
+            newShape(false)
+          else
+            newShape(true)
+          end
         end
       end
+      timer = 0
     end
-    timer = 0
-  end  
+  end
 end
 
 -------------------------------------
@@ -197,7 +293,10 @@ end
 -------------------------------------
 -------------------------------------
 function love.keypressed(key)
-  if next(current) ~= nil then
+  if (game_on == false) and (key == " ") then
+    game_on = true
+    newShape()  
+  elseif next(current) ~= nil then
     if key == "down" then
       if testMap(0, 1) then
         updateMapDown()
@@ -270,12 +369,15 @@ end
 -------------------------------------
 -------------------------------------
 function printGrid()
-  love.graphics.setColor(255,0,127,255)
+  local c = {255,0,0,255}
+--  love.graphics.setColor(255,0,127,255)
+  love.graphics.setColor(c)
   local w, h
   
   for h=1,#map,1 do
     for w=1,#map[h] do
       if (map[h][w] ~= 0) then
+--        love.graphics.setColor(colors_map[h][w])
         love.graphics.rectangle("fill", (w - 1) * window.x, (h - 1) * window.y, window.x, window.y)
       end
     end
@@ -300,6 +402,7 @@ function newShape(reset)
   rotation_state = 0
   shape_number = math.random(1,8)
   current = deepCopy(Shapes[shape_number])
+  color = Colors[shape_number]
   
   for i = 1, #current do
     local x = current[i][1]
@@ -307,9 +410,11 @@ function newShape(reset)
     
     if map[y][x] == 1 then
       print("SCORE : ", score)
-      love.event.quit()
+      game_on = false
+      resetGame()
     else
       map[y][x] = 2
+      colors_map[y][x] = color
     end
   end
 end
@@ -327,11 +432,15 @@ function updateMapDown()
     local x = current[i][1]
     local y = current[i][2]
     map[y][x] = 0
+    colors_map[y][x] = {0,0,0,0}
     current[i][2] = y + 1
   end
   
   for i = 1, #current do
-    map[current[i][2]][current[i][1]] = 2 
+    local x = current[i][1]
+    local y = current[i][2]
+    map[y][x] = 2 
+    colors_map[y][x] = color 
   end
 end
 
@@ -347,12 +456,15 @@ function updateMapLeft()
     local x = current[i][1]
     local y = current[i][2]
     map[y][x] = 0
---    map[y][x-1] = 2
+    colors_map[y][x] = {0,0,0,0}
     current[i][1] = x - 1
   end
   
   for i = 1, #current do
-    map[current[i][2]][current[i][1]] = 2 
+    local x = current[i][1]
+    local y = current[i][2]
+    map[y][x] = 2 
+    colors_map[y][x] = color 
   end
 end
 
@@ -369,12 +481,15 @@ function updateMapRight()
     local x = current[i][1]
     local y = current[i][2]
     map[y][x] = 0
---    map[y][x+1] = 2
+    colors_map[y][x] = {0,0,0,0}
     current[i][1] = x + 1
   end
   
   for i = 1, #current do
-    map[current[i][2]][current[i][1]] = 2 
+    local x = current[i][1]
+    local y = current[i][2]
+    map[y][x] = 2 
+    colors_map[y][x] = color 
   end
 end
 
@@ -425,12 +540,14 @@ function updateRotatedGrid(rotated_shape)
     local x = current[i][1]
     local y = current[i][2]
     map[y][x] = 0
+    colors_map[y][x] = {0,0,0,0}
   end
   
   for i = 1, #rotated_shape do
     local x = rotated_shape[i][1]
     local y = rotated_shape[i][2]
     map[y][x] = 2
+    colors_map[y][x] = color
   end
   
   current = rotated_shape
@@ -487,16 +604,19 @@ function updateGrid(res_lines)
     
     for w=1,#map[#map] do
       map[line][w] = 0
+      colors_map[line][w] = {0,0,0,0}
     end
     
     for h=line,2,-1 do
       for w=1,#map[#map] do
         map[h][w] = map[h-1][w]
+        colors_map[h][w] = colors_map[h-1][w]
       end
     end
     
     for w=1,#map[#map] do
       map[1][w] = 0
+      colors_map[1][w] = {0,0,0,0}
     end
     
     score = score + 1
