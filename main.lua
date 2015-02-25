@@ -4,6 +4,11 @@
 -------------------------------------
 -------------------------------------
 function love.load()
+-- music
+  music = love.audio.newSource("tetris.mp3", "static")
+  music:setVolume(0.7)
+  music:play()
+  
 -- make the game working
   game_on = false
   
@@ -126,56 +131,9 @@ function love.load()
     } -- tiny
   }
   
--- THE current Shape
-  current = {pts = {}, nb = 0, rot_state = 0}
-  next_nb = 0
-  timer = 0
-  score = 0
-  
-  -- 10*18
-  map = {
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-  }
-  
-  -- 10*18
-  colors_map = {
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-  }
-  
+  resetGame()
+  game_over = false
+  last_score = 0
   
   window = {x = 20, y = 20}
     
@@ -187,6 +145,8 @@ function resetGame()
   next_nb = 0
   timer = 0
   score = 0
+  blink = true
+  pause = false
   
   -- 10*18
   map = {
@@ -230,8 +190,7 @@ function resetGame()
       { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
       { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
       { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
-  }
-  
+  }  
 end
 
 
@@ -241,16 +200,21 @@ end
 -------------------------------------
 -------------------------------------
 function love.update(dt)
-  if (game_on == true) then
-    timer = timer + dt
-    
+  timer = timer + dt
+  
+  if music:isStopped() then
+    music:play()
+  end
+  
+  if ((game_on == true) and (pause == false)) then    
+
     if timer >= 1 then
       if next(current.pts) ~= nil then
         if testMap(0, 1) then
           updateMapDown()
         else
           local res_lines = checkForLine()
-    
+
           if next(res_lines) ~= nil then
             updateGrid(res_lines)
             newShape(false)
@@ -261,7 +225,13 @@ function love.update(dt)
       end
       timer = 0
     end
+  else
+    if (timer >= 0.5) then
+      blink = not blink
+      timer = 0
+    end
   end
+  
 end
 
 -------------------------------------
@@ -284,8 +254,25 @@ function love.draw()
   -- score
   printScore()
   
-  -- print next shape
+  -- next shape
   printNextShape()
+  
+  -- new game if game off
+  if (game_on == false) then
+    printNewGame()
+    
+    if (blink) then
+      printPressStart()
+    end
+  end
+  
+  if game_over then
+    printGameOver()
+  end
+  
+  if pause then
+    printPause()
+  end
 end
 
 -------------------------------------
@@ -295,11 +282,18 @@ end
 -------------------------------------
 function love.keypressed(key)
   if (game_on == false) and (key == " ") then
+    local menu_sound = love.audio.newSource("menu.mp3", "static")
+    menu_sound:play()
     game_on = true
+    game_over = false
     newShape(false)
-  elseif (game_on == false) and (key == 'p') then
-    game_on = true
-  elseif next(current) ~= nil then
+  elseif (key == "p") or (key == "P") then
+    local menu_sound = love.audio.newSource("menu.mp3", "static")
+    menu_sound:play()
+    pause = not pause
+  elseif (key == "q") or (key == "Q") then
+    love.event.quit()
+  elseif (pause == false) and (next(current) ~= nil) then
     if key == "down" then
       if testMap(0, 1) then
         updateMapDown()
@@ -316,8 +310,6 @@ function love.keypressed(key)
       updateMapBottom()
     elseif key == "up" then
       rotateShape()
-    elseif key == "p" then
-      game_on = false
     end
   end
 end
@@ -404,9 +396,9 @@ function printScore()
   love.graphics.line(x, my, mx, my)
   love.graphics.line(mx, y, mx, my)
   
-  local offset = calculateOffset(score)
+  love.graphics.setNewFont("VCR_OSD_MONO.ttf", 30)  
   love.graphics.setColor(255, 255, 0, 255)
-  love.graphics.print(tostring(score), (x+mx-window.x)/2, (my)/2, 0, 2, 2, offset, 0)
+  love.graphics.printf(tostring(score), x, my/2, window.x * w/2, 'center')
 end
 
 function printNextShape()
@@ -444,13 +436,17 @@ function printControls()
   local mx = x + ((w*window.x) / 2)
   local my = y + ((w*window.x) / 2)
   
+  love.graphics.setNewFont("Arrows.ttf", 25)
+--  love.graphics.printf(tostring(score), x, my/2, window.x * w/2, 'center')
   love.graphics.setColor(255, 0, 0, 255)
-  love.graphics.print("<-", x, my + window.x)
-  love.graphics.print("->", x, my + window.x*2)
-  love.graphics.print("^", x, my + window.x*3)
-  love.graphics.print("v", x, my + window.x*4)
+  love.graphics.print("B", x, my + window.x)
+  love.graphics.print("A", x, my + window.x*2)
+  love.graphics.print("C", x, my + window.x*3)
+  love.graphics.print("D", x, my + window.x*4)
+  love.graphics.setNewFont("Roboto-Condensed.ttf", 15)
   love.graphics.print("SPACE", x, my + window.x*5)
   love.graphics.print("P", x, my + window.x*6)
+  love.graphics.print("Q", x, my + window.x*7)
   
   local xx = x + window.x * 2.5
   love.graphics.setColor(0, 0, 0, 255)
@@ -459,24 +455,70 @@ function printControls()
   love.graphics.print("Go Up", xx, my + window.x*3)
   love.graphics.print("Go Down", xx, my + window.x*4)
   love.graphics.print("Go Bottom", xx, my + window.x*5)
+  love.graphics.setColor(255, 255, 255, 255)
   love.graphics.print("Pause", xx, my + window.x*6)
+  love.graphics.print("Quit!", xx, my + window.x*7)
 end
 
+function printNewGame()
+  local h = #map
+  local w = #map[#map]
+  local x = window.x * 2
+  local y = window.y * (h - 4)
+  
+  love.graphics.setNewFont("Mario-Kart-DS.ttf", 30)  
+  love.graphics.setColor(255, 128, 0, 255)
+  love.graphics.printf("NEW GAME", x, y, (window.x * (w-2)), 'center')
+end
 
-function calculateOffset(score)
-  if (score < 10) then
-    return 0
-  else
-    local result = 2
-    local s = score / 10
-    while s >= 10 do
-      result = result + 2
-      s = s / 10
-    end
-  end
+function printPressStart()
+  local h = #map
+  local w = #map[#map]
+  local x = window.x * 2
+  local y = window.y * (h - 2.5)
+  
+  love.graphics.setNewFont("Mario-Kart-DS.ttf", 20)  
+  love.graphics.setColor(128, 0, 255, 255)
+  love.graphics.printf("press", x, y, (window.x * (w-2)), 'center')
+  love.graphics.setColor(255, 255, 255, 255)
+  love.graphics.printf("SPACE", x, y + window.y, (window.x * (w-2)), 'center')
+  love.graphics.setColor(128, 0, 255, 255)
+  love.graphics.printf("to start", x, y + window.y*2, (window.x * (w-2)), 'center')
+end
+
+function printPause()
+  local h = #map
+  local w = #map[#map]
+  local x = window.x * 2
+  local y = window.y * (h/2)
+  
+  love.graphics.setNewFont("Roboto-Condensed.ttf", 40)  
+  love.graphics.setColor(255, 255, 255, 255)
+  love.graphics.printf("PAUSE", x, y, (window.x * (w-2)), 'center')
 end
 
 function gameOver()
+  local game_over_sound = love.audio.newSource("gameover.mp3", "static")
+  game_over_sound:play()
+  game_on = false
+  game_over = true
+  last_score = score
+  resetGame()
+end
+
+function printGameOver()
+  local h = #map
+  local w = #map[#map]
+  local x = window.x * 2
+  local y = window.y * (h - 7)
+  
+  love.graphics.setNewFont("DoubleFeature20.ttf", 40)  
+  love.graphics.setColor(255, 0, 0, 255)
+  love.graphics.print("GAME OVER", x, y, -45)
+  
+  love.graphics.setNewFont("VCR_OSD_MONO.ttf", 40)  
+  love.graphics.setColor(255, 255, 255, 255)
+  love.graphics.printf(tostring(last_score), x + window.x * 2, y - window.y, (window.x * (w-2)), 'center')
 end
 
 
@@ -506,10 +548,7 @@ function newShape(reset)
     local y = current.pts[i][2]
     
     if map[y][x] == 1 then
-      print("SCORE : ", score)
-      game_on = false
-      resetGame()
-      return
+      return gameOver()
     else
       map[y][x] = 2
       colors_map[y][x] = Colors[current.nb]
@@ -524,6 +563,9 @@ end
 -------------------------------------
 -------------------------------------
 function updateMapDown()
+  local move_sound = love.audio.newSource("move.mp3", "static")
+  move_sound:play()
+  
   local i 
   
   for i = 1, #current.pts  do
@@ -548,6 +590,9 @@ end
 -------------------------------------
 -------------------------------------
 function updateMapLeft()
+  local move_sound = love.audio.newSource("move.mp3", "static")
+  move_sound:play()
+  
   local i
   
   for i = 1, #current.pts do
@@ -573,6 +618,9 @@ end
 -------------------------------------
 -------------------------------------
 function updateMapRight()
+  local move_sound = love.audio.newSource("move.mp3", "static")
+  move_sound:play()
+  
   local i
   
   for i = 1, #current.pts do
@@ -601,6 +649,9 @@ function updateMapBottom()
   while testMap(0, 1) do
     updateMapDown()
   end
+  
+  local bottom_sound = love.audio.newSource("bottom.mp3", "static")
+  bottom_sound:play()
 end
 
 
@@ -635,6 +686,9 @@ function gridOccupied(shape)
 end
 
 function updateRotatedGrid(rotated_shape)
+  local rotate_sound = love.audio.newSource("rotate.mp3", "static")
+  rotate_sound:play()
+  
   for i = 1, #current.pts do
     local x = current.pts[i][1]
     local y = current.pts[i][2]
@@ -717,6 +771,9 @@ function updateGrid(res_lines)
       map[1][w] = 0
       colors_map[1][w] = {0,0,0,0}
     end
+    
+    local line_sound = love.audio.newSource("line.mp3", "static")
+    line_sound:play()
     
     score = score + 1
   end
