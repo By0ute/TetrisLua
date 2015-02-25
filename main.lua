@@ -369,15 +369,15 @@ end
 -------------------------------------
 -------------------------------------
 function printGrid()
-  local c = {255,0,0,255}
---  love.graphics.setColor(255,0,127,255)
-  love.graphics.setColor(c)
+--  local c = {255,0,0,255}
+----  love.graphics.setColor(255,0,127,255)
+--  love.graphics.setColor(c)
   local w, h
   
   for h=1,#map,1 do
     for w=1,#map[h] do
       if (map[h][w] ~= 0) then
---        love.graphics.setColor(colors_map[h][w])
+        love.graphics.setColor(colors_map[h][w])
         love.graphics.rectangle("fill", (w - 1) * window.x, (h - 1) * window.y, window.x, window.y)
       end
     end
