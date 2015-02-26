@@ -15,7 +15,9 @@ function love.load()
             move = love.audio.newSource("move.mp3", "static"),
             bottom = love.audio.newSource("bottom.mp3", "static"),
             rotate = love.audio.newSource("rotate.mp3", "static"),
-            line = love.audio.newSource("line.mp3", "static")}
+            line = love.audio.newSource("line.mp3", "static"),
+            play_music = true,
+            play_sounds = true,}
   sounds.music:setVolume(0.7)
   sounds.music:play()
   
@@ -25,19 +27,27 @@ function love.load()
 -- Colors
   Colors =
   {
-    {0,200,200,255}, -- I
-    {255,128,0,255}, -- L
-    {0,0,255,255}, -- RL
-    {255,255,0,255}, -- O
-    {255,0,0,255}, -- Z
-    {0,255,0,255}, -- S
-    {255,0,127,255}, -- T
-    {255,255,255,255}, -- tiny
-    {25, 0, 51, 255}, -- X
-    {153, 255, 51, 255}, -- U
-    {153, 51, 255, 255}, -- |_
-    {102, 0, 51, 255}, -- f
-    {255, 102, 255, 255}, -- <
+    {255,51,51,255}, -- I
+    {255,51,255,255}, -- L
+    {153,153,0,255}, -- RL
+    {255,153,51,255}, -- O
+    {255,51,153,255}, -- Z
+    {153,76,0,255}, -- S
+    {255,255,51,255}, -- T
+    {153,0,76,255}, -- tiny
+    {255, 255, 255, 255}, -- +
+    {153, 0, 0, 255}, -- U
+    {51, 255, 51, 255}, -- |_
+    {153, 0, 153, 255}, -- f
+    {51, 255, 153, 255}, -- <
+    {76, 0, 153, 255}, -- I.
+    {51, 255, 255, 255}, -- BT
+    {0, 153, 153, 255}, -- S'
+    {51, 51, 255, 255}, -- BZ
+    {0, 153, 76, 255}, -- |
+    {153, 51, 255, 255}, -- 6 
+    {0, 153, 0, 255}, -- W 
+    {0, 0, 0, 255}, -- I' 
   }
   
 -- Shapes
@@ -94,7 +104,7 @@ function love.load()
       {5, 2},
       {6, 2},
       {5, 3}
-    }, -- X    
+    }, -- +    
     {
       {4, 1},
       {4, 2},
@@ -121,6 +131,62 @@ function love.load()
       {5, 2},
       {4, 2},
     }, -- <
+    {
+      {5, 1},
+      {5, 2},
+      {5, 3},
+      {5, 4},
+      {6, 4}
+    }, -- I.
+    {
+      {5, 1},
+      {5, 2},
+      {4, 3},
+      {5, 3},
+      {6, 3}
+    }, -- BT
+    {
+      {4, 2},
+      {5, 2},
+      {5, 1},
+      {6, 1},
+      {7, 1}
+    }, -- S'
+    {
+      {4, 3},
+      {4, 2},
+      {5, 2},
+      {6, 2},
+      {6, 1}
+    }, -- BZ
+    {
+      {3, 1},
+      {4, 1},
+      {5, 1},
+      {6, 1},
+      {7, 1}
+    }, -- |
+    {
+      {5, 1},
+      {5, 2},
+      {5, 3},
+      {6, 3},
+      {6, 2}
+    }, -- 6 
+    {
+      {4, 3},
+      {4, 2},
+      {5, 2},
+      {5, 1},
+      {6, 1}
+    }, -- W 
+    {
+      {5, 1},
+      {5, 2},
+      {5, 3},
+      {5, 4},
+      {6, 2}
+    }, -- I'
   }
   
 -- ROTATIONS
@@ -179,7 +245,7 @@ function love.load()
       {{0,0}, {0,0}, {0,0}, {0,0}, {0,0}},
       {{0,0}, {0,0}, {0,0}, {0,0}, {0,0}},
       {{0,0}, {0,0}, {0,0}, {0,0}, {0,0}},
-    }, -- X 
+    }, -- +
     {
       {{2,0}, {1,-1}, {0,0}, {-1,1}, {0,2}},
       {{0,2}, {1,1}, {0,0}, {-1,-1}, {-2,0}},
@@ -203,18 +269,68 @@ function love.load()
       {{-1,1}, {0,0}, {1,1}},
       {{-1,-1}, {0,0}, {-1,1}},
       {{1,-1}, {0,0}, {-1,-1}},
-    }, -- <
+    }, -- <    
+    {
+      {{2,1}, {1,0}, {0,-1}, {-1,-2}, {-2,-1}},
+      {{-1,2}, {0,1}, {1,0}, {2,-1}, {1,-2}},
+      {{-2,-1}, {-1,0}, {0,1}, {1,2}, {2,1}},
+      {{1,-2}, {0,-1}, {-1,0}, {-2,1}, {-1,2}},
+    }, -- I.
+    {
+      {{1,1}, {0,0}, {0,-2}, {-1,-1}, {-2,0}},
+      {{-1,1}, {0,0}, {2,0}, {1,-1}, {0,-2}},
+      {{-1,-1}, {0,0}, {0,2}, {1,1}, {2,0}},
+      {{1,-1}, {0,0}, {-2,0}, {-1,1}, {0,2}},
+    }, -- BT
+    {
+      {{1,-2}, {0,-1}, {1,0}, {0,1}, {-1,2}},
+      {{2,1}, {1,0}, {0,1}, {-1,0}, {-2,-1}},
+      {{-1,2}, {0,1}, {-1,0}, {0,-1}, {1,-2}},
+      {{-2,-1}, {-1,0}, {0,-1}, {1,0}, {2,1}},
+    }, -- S'
+    {
+      {{0,-2}, {1,-1}, {0,0}, {-1,1}, {0,2}},
+      {{0,2}, {-1,1}, {0,0}, {1,-1}, {0,-2}},
+      {{0,-2}, {1,-1}, {0,0}, {-1,1}, {0,2}},
+      {{0,2}, {-1,1}, {0,0}, {1,-1}, {0,-2}},
+    }, -- BZ
+    {
+      {{2,-2}, {1,-1}, {0,0}, {-1,1}, {-2,2}},
+      {{-2,2}, {-1,1}, {0,0}, {1,-1}, {2,-2}},
+      {{2,-2}, {1,-1}, {0,0}, {-1,1}, {-2,2}},
+      {{-2,2}, {-1,1}, {0,0}, {1,-1}, {2,-2}},
+    }, -- |
+    {
+      {{1,1}, {0,0}, {-1,-1}, {-2,0}, {-1,1}},
+      {{-1,1}, {0,0}, {1,-1}, {0,-2}, {-1,-1}},
+      {{-1,-1}, {0,0}, {1,1}, {2,0}, {1,-1}},
+      {{1,-1}, {0,0}, {-1,1}, {0,2}, {1,1}},
+    }, -- 6 
+    {
+      {{0,-2}, {1,-1}, {0,0}, {1,1}, {0,2}},
+      {{2,0}, {1,1}, {0,0}, {-1,1}, {-2,0}},
+      {{0,2}, {-1,1}, {0,0}, {-1,-1}, {0,-2}},
+      {{-2,0}, {-1,-1}, {0,0}, {1,-1}, {2,0}},
+    }, -- W 
+    {
+      {{2,1}, {1,0}, {0,-1}, {-1,-2}, {0,1}},
+      {{-1,2}, {0,1}, {1,0}, {2,-1}, {-1,0}},
+      {{-2,-1}, {-1,0}, {0,1}, {1,2}, {0,-1}},
+      {{1,-2}, {0,-1}, {-1,0}, {-2,1}, {1,0}},
+    }, -- I' 
   }
-  
+
+  game = {over = false}
+  score = {last = 0}
+  shape = {max_random = #Shapes}
   resetGame()
 end
 
 function resetGame()
-  print("len", #Shapes)
-  shape = {pts = {}, nb = 0, rot_state = 0, next_nb = 0, max_random = #Shapes}
-  score = {current = 0, last = 0}
-  game = {over = false, on = false, pause = false, timer = 0}
-  menu = {start = {true, 0, 0.5}}
+  shape = {pts = {}, nb = 0, rot_state = 0, next_nb = 0, max_random = shape.max_random}
+  score = {current = 0, last = score.last}
+  game = {over = game.over, on = false, pause = false, timer = 0}
+  menu = {start = {true, 0, 0.5}, controls = false}
   
   -- 10*18
   map = {
@@ -270,7 +386,7 @@ end
 function love.update(dt)
   game.timer = game.timer + dt
   
-  if sounds.music:isStopped() then
+  if (sounds.play_music == true) and (sounds.music:isStopped()) then
     sounds.music:play()
   end
   
@@ -358,15 +474,35 @@ end
 -------------------------------------
 function love.keypressed(key)
   if (game.on == false) and (key == " ") then
-    sounds.menu:play()
+    if sounds.play_sounds == true then
+      sounds.menu:play()
+    end
     game.on = true
     game.over = false
     newShape(false)
   elseif (key == "p") or (key == "P") then
-    sounds.menu:play()
+    if sounds.play_sounds == true then
+      sounds.menu:play()
+    end
     game.pause = not game.pause
   elseif (key == "q") or (key == "Q") then
     love.event.quit()
+  elseif (key == "m") or (key == 'M') then
+    sounds.play_music = not sounds.play_music
+    if sounds.play_music == true then
+      sounds.music:play()
+    elseif sounds.play_music == false then
+      sounds.music:stop()
+    end
+  elseif (key == "s") or (key == 'S') then
+    sounds.play_sounds = not sounds.play_sounds
+  elseif (key == "l") or (key == 'L') then
+    if shape.max_random == #Shapes then
+      shape.max_random = 7
+    else
+      shape.max_random = #Shapes
+    end
+    shape.next_nb = math.random(0,shape.max_random)
   elseif (game.pause == false) and (next(shape.pts) ~= nil) then
     if key == "down" then
       if testMap(0, 1) then
@@ -571,7 +707,9 @@ function printPause()
 end
 
 function gameOver()
-  sounds.game_over:play()
+  if sounds.play_sounds == true then
+    sounds.game_over:play()
+  end
   game.on = false
   game.over = true
   score.last = score.current
@@ -606,9 +744,7 @@ function newShape(reset)
   end
 
   local max = shape.max_random
-  local shape_number = math.random(7,max)
---  print("shape_nb", shape_number)
---  print("max", shape.max_random)
+  local shape_number = math.random(0,max)
   
   if (shape.next_nb ~= 0) then
     local new_nb = shape.next_nb
@@ -621,7 +757,7 @@ function newShape(reset)
     shape = {pts = deepCopy(Shapes[shape_number]),
             nb = shape_number,
             rot_state = 0,
-            next_nb = math.random(7,shape.max_random),
+            next_nb = math.random(0,max),
             max_random = max}
   end
   
@@ -645,7 +781,9 @@ end
 -------------------------------------
 -------------------------------------
 function updateMapDown()
-  sounds.move:play()
+  if sounds.play_sounds == true then
+    sounds.move:play()
+  end
   
   local i 
   
@@ -671,7 +809,9 @@ end
 -------------------------------------
 -------------------------------------
 function updateMapLeft()
-  sounds.move:play()
+  if sounds.play_sounds == true then
+    sounds.move:play()
+  end
   
   local i
   
@@ -698,7 +838,9 @@ end
 -------------------------------------
 -------------------------------------
 function updateMapRight()
-  sounds.move:play()
+  if sounds.play_sounds == true then
+    sounds.move:play()
+  end
   
   local i
   
@@ -729,7 +871,9 @@ function updateMapBottom()
     updateMapDown()
   end
   
-  sounds.bottom:play()
+  if sounds.play_sounds == true then
+    sounds.bottom:play()
+  end
 end
 
 
@@ -764,7 +908,9 @@ function gridOccupied(shape)
 end
 
 function updateRotatedGrid(rotated_shape)
-  sounds.rotate:play()
+  if sounds.play_sounds == true then
+    sounds.rotate:play()
+  end
   
   for i = 1, #shape.pts do
     local x = shape.pts[i][1]
@@ -849,7 +995,9 @@ function updateGrid(res_lines)
       colors_map[1][w] = {0,0,0,0}
     end
     
-    sounds.line:play()
+    if sounds.play_sounds == true then
+      sounds.line:play()
+    end
     
     score.current = score.current + factorial(#res_lines)
   end
