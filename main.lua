@@ -775,9 +775,22 @@ function updateGrid(res_lines)
     local line_sound = love.audio.newSource("line.mp3", "static")
     line_sound:play()
     
-    score = score + 1
+    score = score + factorial(#res_lines)
   end
 end
+
+function factorial(nb)
+  if nb < 0 then
+    return 0
+  end
+    
+  if (nb == 0) then
+    return 1
+  else
+    return nb * factorial(nb-1)
+  end
+end
+
 
 -------------------------------------
 -------------------------------------
