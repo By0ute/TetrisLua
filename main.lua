@@ -32,7 +32,9 @@ function love.load()
     {255,0,0,255}, -- Z
     {0,255,0,255}, -- S
     {255,0,127,255}, -- T
-    {255,255,255,255} -- tiny
+    {255,255,255,255}, -- tiny
+    {25, 0, 51, 255}, -- X
+    {153, 255, 51, 255}, -- U
   }
   
 -- Shapes
@@ -83,6 +85,20 @@ function love.load()
     {
       {5, 1}
     }, -- tiny (1 pixel)
+    {
+      {5, 1},
+      {4, 2},
+      {5, 2},
+      {6, 2},
+      {5, 3}
+    }, -- X    
+    {
+      {4, 1},
+      {4, 2},
+      {5, 2},
+      {6, 2},
+      {6, 1}
+    }, -- U
   }
   
 -- ROTATIONS
@@ -135,14 +151,27 @@ function love.load()
       {{0,0}},
       {{0,0}},
       {{0,0}}
-    } -- tiny
+    }, -- tiny
+    {
+      {{0,0}, {0,0}, {0,0}, {0,0}, {0,0}},
+      {{0,0}, {0,0}, {0,0}, {0,0}, {0,0}},
+      {{0,0}, {0,0}, {0,0}, {0,0}, {0,0}},
+      {{0,0}, {0,0}, {0,0}, {0,0}, {0,0}},
+    }, -- X 
+    {
+      {{2,0}, {1,-1}, {0,0}, {-1,1}, {0,2}},
+      {{0,2}, {1,1}, {0,0}, {-1,-1}, {-2,0}},
+      {{-2,0}, {-1,1}, {0,0}, {1,-1}, {0,-2}},
+      {{0,-2}, {-1,-1}, {0,0}, {1,1}, {2,0}},
+    }, -- U
   }
   
   resetGame()
 end
 
 function resetGame()
-  shape = {pts = {}, nb = 0, rot_state = 0, next_nb = 0}
+  print("len", #Shapes)
+  shape = {pts = {}, nb = 0, rot_state = 0, next_nb = 0, max_random = #Shapes}
   score = {current = 0, last = 0}
   game = {over = false, on = false, pause = false, timer = 0}
   menu = {start = {true, 0, 0.5}}
@@ -536,13 +565,24 @@ function newShape(reset)
     end
   end
 
-  local shape_number = math.random(1,8)
+  local max = shape.max_random
+  local shape_number = math.random(1,max)
+--  print("shape_nb", shape_number)
+--  print("max", shape.max_random)
   
   if (shape.next_nb ~= 0) then
     local new_nb = shape.next_nb
-    shape = {pts = deepCopy(Shapes[new_nb]), nb = new_nb, rot_state = 0, next_nb = shape_number}
+    shape = {pts = deepCopy(Shapes[new_nb]),
+            nb = new_nb,
+            rot_state = 0,
+            next_nb = shape_number,
+            max_random = max}
   else  
-    shape = {pts = deepCopy(Shapes[shape_number]), nb = shape_number, rot_state = 0, next_nb = math.random(1,8)}
+    shape = {pts = deepCopy(Shapes[shape_number]),
+            nb = shape_number,
+            rot_state = 0,
+            next_nb = math.random(1,shape.max_random),
+            max_random = max}
   end
   
   for i = 1, #shape.pts do
