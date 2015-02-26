@@ -4,13 +4,20 @@
 -------------------------------------
 -------------------------------------
 function love.load()
--- music
-  music = love.audio.newSource("tetris.mp3", "static")
-  music:setVolume(0.7)
-  music:play()
+-- Interface
+  window = {x = 20, y = 20}
+  love.window.setMode(360, 400, {resizable=false})
   
--- make the game working
-  game_on = false
+-- music
+  sounds = {music = love.audio.newSource("tetris.mp3"),
+            menu = love.audio.newSource("menu.mp3", "static"),
+            game_over = love.audio.newSource("gameover.mp3", "static"),
+            move = love.audio.newSource("move.mp3", "static"),
+            bottom = love.audio.newSource("bottom.mp3", "static"),
+            rotate = love.audio.newSource("rotate.mp3", "static"),
+            line = love.audio.newSource("line.mp3", "static")}
+  sounds.music:setVolume(0.7)
+  sounds.music:play()
   
 -- Random seed
   math.randomseed(os.time())
@@ -132,21 +139,13 @@ function love.load()
   }
   
   resetGame()
-  game_over = false
-  last_score = 0
-  
-  window = {x = 20, y = 20}
-    
-  love.window.setMode(360, 400, {resizable=false})
 end
 
 function resetGame()
-  current = {pts = {}, nb = 0, rot_state = 0}
-  next_nb = 0
-  timer = 0
-  score = 0
-  blink = true
-  pause = false
+  shape = {pts = {}, nb = 0, rot_state = 0, next_nb = 0}
+  score = {current = 0, last = 0}
+  game = {over = false, on = false, pause = false, timer = 0}
+  menu = {start = {true, 0, 0.5}}
   
   -- 10*18
   map = {
@@ -200,16 +199,16 @@ end
 -------------------------------------
 -------------------------------------
 function love.update(dt)
-  timer = timer + dt
+  game.timer = game.timer + dt
   
-  if music:isStopped() then
-    music:play()
+  if sounds.music:isStopped() then
+    sounds.music:play()
   end
   
-  if ((game_on == true) and (pause == false)) then    
+  if ((game.on == true) and (game.pause == false)) then    
 
-    if timer >= 1 then
-      if next(current.pts) ~= nil then
+    if game.timer >= 1 then
+      if next(shape.pts) ~= nil then
         if testMap(0, 1) then
           updateMapDown()
         else
@@ -223,12 +222,20 @@ function love.update(dt)
           end
         end
       end
-      timer = 0
+      game.timer = 0
     end
-  else
-    if (timer >= 0.5) then
-      blink = not blink
-      timer = 0
+    
+  elseif (game.on == false) then
+    if (menu.start[2] < 0) then
+      menu.start[1] = false
+      menu.start[2] = 0
+    elseif (menu.start[2] > menu.start[3]) then
+      menu.start[1] = true
+      menu.start[2] = menu.start[3]
+    elseif (menu.start[1] == true) then
+      menu.start[2] = menu.start[2] - dt
+    elseif (menu.start[1] == false) then
+      menu.start[2] = menu.start[2] + dt
     end
   end
   
@@ -258,19 +265,19 @@ function love.draw()
   printNextShape()
   
   -- new game if game off
-  if (game_on == false) then
+  if (game.on == false) then
     printNewGame()
     
-    if (blink) then
+    if (menu.start[1] == true) then
       printPressStart()
     end
   end
   
-  if game_over then
+  if game.over then
     printGameOver()
   end
   
-  if pause then
+  if game.pause then
     printPause()
   end
 end
@@ -281,19 +288,17 @@ end
 -------------------------------------
 -------------------------------------
 function love.keypressed(key)
-  if (game_on == false) and (key == " ") then
-    local menu_sound = love.audio.newSource("menu.mp3", "static")
-    menu_sound:play()
-    game_on = true
-    game_over = false
+  if (game.on == false) and (key == " ") then
+    sounds.menu:play()
+    game.on = true
+    game.over = false
     newShape(false)
   elseif (key == "p") or (key == "P") then
-    local menu_sound = love.audio.newSource("menu.mp3", "static")
-    menu_sound:play()
-    pause = not pause
+    sounds.menu:play()
+    game.pause = not game.pause
   elseif (key == "q") or (key == "Q") then
     love.event.quit()
-  elseif (pause == false) and (next(current) ~= nil) then
+  elseif (game.pause == false) and (next(shape.pts) ~= nil) then
     if key == "down" then
       if testMap(0, 1) then
         updateMapDown()
@@ -320,15 +325,15 @@ end
 -------------------------------------
 -------------------------------------
 function testMap(x, y)
-  if next(current.pts) == nil then
+  if next(shape.pts) == nil then
     return false
   else
     local i
     local nb_pieces = 0
     
-    for i = 1, #current.pts do
-      local px = current.pts[i][1]
-      local py = current.pts[i][2]
+    for i = 1, #shape.pts do
+      local px = shape.pts[i][1]
+      local py = shape.pts[i][2]
       
       if ((py + y) <= #map) and ((py + y) > 0) and
         ((px + x) <= #map[#map]) and ((px + x) > 0) then
@@ -338,7 +343,7 @@ function testMap(x, y)
       end
     end
     
-    return (nb_pieces == #current.pts)
+    return (nb_pieces == #shape.pts)
   end
 end
 
@@ -398,7 +403,7 @@ function printScore()
   
   love.graphics.setNewFont("VCR_OSD_MONO.ttf", 30)  
   love.graphics.setColor(255, 255, 0, 255)
-  love.graphics.printf(tostring(score), x, my/2, window.x * w/2, 'center')
+  love.graphics.printf(tostring(score.current), x, my/2, window.x * w/2, 'center')
 end
 
 function printNextShape()
@@ -415,14 +420,14 @@ function printNextShape()
   love.graphics.line(x, my, mx, my)
   love.graphics.line(mx, y, mx, my)
   
-  if (next_nb ~= 0) then
-    local shape = deepCopy(Shapes[next_nb])
-    local col = Colors[next_nb]
+  if (shape.next_nb ~= 0) then
+    local next_shape = deepCopy(Shapes[shape.next_nb])
+    local col = Colors[shape.next_nb]
     love.graphics.setColor(col)
     local i
-    for i=1,#shape do
-      local xx = shape[i][1] - 3
-      local yy = shape[i][2]    
+    for i=1,#next_shape do
+      local xx = next_shape[i][1] - 3
+      local yy = next_shape[i][2]    
       love.graphics.rectangle("fill", x + xx * window.x, y + yy * window.y, window.x, window.y)
     end
   end
@@ -437,7 +442,6 @@ function printControls()
   local my = y + ((w*window.x) / 2)
   
   love.graphics.setNewFont("Arrows.ttf", 25)
---  love.graphics.printf(tostring(score), x, my/2, window.x * w/2, 'center')
   love.graphics.setColor(255, 0, 0, 255)
   love.graphics.print("B", x, my + window.x)
   love.graphics.print("A", x, my + window.x*2)
@@ -498,11 +502,10 @@ function printPause()
 end
 
 function gameOver()
-  local game_over_sound = love.audio.newSource("gameover.mp3", "static")
-  game_over_sound:play()
-  game_on = false
-  game_over = true
-  last_score = score
+  sounds.game_over:play()
+  game.on = false
+  game.over = true
+  score.last = score.current
   resetGame()
 end
 
@@ -518,7 +521,7 @@ function printGameOver()
   
   love.graphics.setNewFont("VCR_OSD_MONO.ttf", 40)  
   love.graphics.setColor(255, 255, 255, 255)
-  love.graphics.printf(tostring(last_score), x + window.x * 2, y - window.y, (window.x * (w-2)), 'center')
+  love.graphics.printf(tostring(score.last), x + window.x * 2, y - window.y, (window.x * (w-2)), 'center')
 end
 
 
@@ -526,32 +529,31 @@ function newShape(reset)
   local i
   
   if (reset) then
-    for i = 1, #current.pts do
-      local x = current.pts[i][1]
-      local y = current.pts[i][2]
+    for i = 1, #shape.pts do
+      local x = shape.pts[i][1]
+      local y = shape.pts[i][2]
       map[y][x] = 1
     end
   end
 
   local shape_number = math.random(1,8)
   
-  if (next_nb ~= 0) then
-    current = {pts = deepCopy(Shapes[next_nb]), nb = next_nb, rot_state = 0}
-    next_nb = shape_number
+  if (shape.next_nb ~= 0) then
+    local new_nb = shape.next_nb
+    shape = {pts = deepCopy(Shapes[new_nb]), nb = new_nb, rot_state = 0, next_nb = shape_number}
   else  
-    current = {pts = deepCopy(Shapes[shape_number]), nb = shape_number, rot_state = 0}
-    next_nb = math.random(1,8)
+    shape = {pts = deepCopy(Shapes[shape_number]), nb = shape_number, rot_state = 0, next_nb = math.random(1,8)}
   end
   
-  for i = 1, #current.pts do
-    local x = current.pts[i][1]
-    local y = current.pts[i][2]
+  for i = 1, #shape.pts do
+    local x = shape.pts[i][1]
+    local y = shape.pts[i][2]
     
     if map[y][x] == 1 then
       return gameOver()
     else
       map[y][x] = 2
-      colors_map[y][x] = Colors[current.nb]
+      colors_map[y][x] = Colors[shape.nb]
     end
   end
 end
@@ -563,24 +565,23 @@ end
 -------------------------------------
 -------------------------------------
 function updateMapDown()
-  local move_sound = love.audio.newSource("move.mp3", "static")
-  move_sound:play()
+  sounds.move:play()
   
   local i 
   
-  for i = 1, #current.pts  do
-    local x = current.pts[i][1]
-    local y = current.pts[i][2]
+  for i = 1, #shape.pts  do
+    local x = shape.pts[i][1]
+    local y = shape.pts[i][2]
     map[y][x] = 0
     colors_map[y][x] = {0,0,0,0}
-    current.pts[i][2] = y + 1
+    shape.pts[i][2] = y + 1
   end
   
-  for i = 1, #current.pts do
-    local x = current.pts[i][1]
-    local y = current.pts[i][2]
+  for i = 1, #shape.pts do
+    local x = shape.pts[i][1]
+    local y = shape.pts[i][2]
     map[y][x] = 2 
-    colors_map[y][x] = Colors[current.nb] 
+    colors_map[y][x] = Colors[shape.nb] 
   end
 end
 
@@ -590,24 +591,23 @@ end
 -------------------------------------
 -------------------------------------
 function updateMapLeft()
-  local move_sound = love.audio.newSource("move.mp3", "static")
-  move_sound:play()
+  sounds.move:play()
   
   local i
   
-  for i = 1, #current.pts do
-    local x = current.pts[i][1]
-    local y = current.pts[i][2]
+  for i = 1, #shape.pts do
+    local x = shape.pts[i][1]
+    local y = shape.pts[i][2]
     map[y][x] = 0
     colors_map[y][x] = {0,0,0,0}
-    current.pts[i][1] = x - 1
+    shape.pts[i][1] = x - 1
   end
   
-  for i = 1, #current.pts do
-    local x = current.pts[i][1]
-    local y = current.pts[i][2]
+  for i = 1, #shape.pts do
+    local x = shape.pts[i][1]
+    local y = shape.pts[i][2]
     map[y][x] = 2 
-    colors_map[y][x] = Colors[current.nb] 
+    colors_map[y][x] = Colors[shape.nb] 
   end
 end
 
@@ -618,24 +618,23 @@ end
 -------------------------------------
 -------------------------------------
 function updateMapRight()
-  local move_sound = love.audio.newSource("move.mp3", "static")
-  move_sound:play()
+  sounds.move:play()
   
   local i
   
-  for i = 1, #current.pts do
-    local x = current.pts[i][1]
-    local y = current.pts[i][2]
+  for i = 1, #shape.pts do
+    local x = shape.pts[i][1]
+    local y = shape.pts[i][2]
     map[y][x] = 0
     colors_map[y][x] = {0,0,0,0}
-    current.pts[i][1] = x + 1
+    shape.pts[i][1] = x + 1
   end
   
-  for i = 1, #current.pts do
-    local x = current.pts[i][1]
-    local y = current.pts[i][2]
+  for i = 1, #shape.pts do
+    local x = shape.pts[i][1]
+    local y = shape.pts[i][2]
     map[y][x] = 2 
-    colors_map[y][x] = Colors[current.nb] 
+    colors_map[y][x] = Colors[shape.nb] 
   end
 end
 
@@ -650,16 +649,15 @@ function updateMapBottom()
     updateMapDown()
   end
   
-  local bottom_sound = love.audio.newSource("bottom.mp3", "static")
-  bottom_sound:play()
+  sounds.bottom:play()
 end
 
 
 function rotateShape()
-  local rotated_shape = deepCopy(current.pts)
+  local rotated_shape = deepCopy(shape.pts)
   
 --  local rotation = Rotations[shape_number][rotation_state+1]
-  local rotation = Rotations[current.nb][current.rot_state+1]
+  local rotation = Rotations[shape.nb][shape.rot_state+1]
   local i
   
   for i=1,#rotated_shape do
@@ -686,12 +684,11 @@ function gridOccupied(shape)
 end
 
 function updateRotatedGrid(rotated_shape)
-  local rotate_sound = love.audio.newSource("rotate.mp3", "static")
-  rotate_sound:play()
+  sounds.rotate:play()
   
-  for i = 1, #current.pts do
-    local x = current.pts[i][1]
-    local y = current.pts[i][2]
+  for i = 1, #shape.pts do
+    local x = shape.pts[i][1]
+    local y = shape.pts[i][2]
     map[y][x] = 0
     colors_map[y][x] = {0,0,0,0}
   end
@@ -700,11 +697,11 @@ function updateRotatedGrid(rotated_shape)
     local x = rotated_shape[i][1]
     local y = rotated_shape[i][2]
     map[y][x] = 2
-    colors_map[y][x] = Colors[current.nb]
+    colors_map[y][x] = Colors[shape.nb]
   end
   
-  current.pts = rotated_shape
-  current.rot_state = (current.rot_state + 1) % 4
+  shape.pts = rotated_shape
+  shape.rot_state = (shape.rot_state + 1) % 4
 end
 
 
@@ -745,9 +742,9 @@ end
 function updateGrid(res_lines)
   local i, k, v
  
-  for i = 1, #current.pts do
-    local x = current.pts[i][1]
-    local y = current.pts[i][2]
+  for i = 1, #shape.pts do
+    local x = shape.pts[i][1]
+    local y = shape.pts[i][2]
     map[y][x] = 1
   end
   
@@ -772,10 +769,9 @@ function updateGrid(res_lines)
       colors_map[1][w] = {0,0,0,0}
     end
     
-    local line_sound = love.audio.newSource("line.mp3", "static")
-    line_sound:play()
+    sounds.line:play()
     
-    score = score + factorial(#res_lines)
+    score.current = score.current + factorial(#res_lines)
   end
 end
 
