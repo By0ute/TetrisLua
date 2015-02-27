@@ -16,10 +16,10 @@ function love.load()
             bottom = love.audio.newSource("bottom.mp3", "static"),
             rotate = love.audio.newSource("rotate.mp3", "static"),
             line = love.audio.newSource("line.mp3", "static"),
-            play_music = true,
-            play_sounds = true,}
+            play_music = false,
+            play_sounds = false,}
   sounds.music:setVolume(0.7)
-  sounds.music:play()
+--  sounds.music:play()
   
 -- Random seed
   math.randomseed(os.time())
@@ -330,7 +330,7 @@ function resetGame()
   shape = {pts = {}, nb = 0, rot_state = 0, next_nb = 0, max_random = shape.max_random}
   score = {current = 0, last = score.last}
   game = {over = game.over, on = false, pause = false, timer = 0}
-  menu = {start = {true, 0, 0.5}, controls = false}
+  menu = {start = {true, 0, 0.5}, controls = {false, false}}
   
   -- 10*18
   map = {
@@ -434,12 +434,6 @@ end
 function love.draw()
   love.graphics.setBackgroundColor(100,100,100,255)
   
-  -- controls
-  printControls()
-  
-  -- squares
-  printGrid()
-  
   -- grid
   printLines()
   
@@ -449,21 +443,29 @@ function love.draw()
   -- next shape
   printNextShape()
   
-  -- new game if game off
-  if (game.on == false) then
-    printNewGame()
+  if (menu.controls[1] == true) then
+    -- controls
+    printControls()
+  else    
+    -- squares
+    printGrid()
     
-    if (menu.start[1] == true) then
-      printPressStart()
+    -- new game if game off
+    if (game.on == false) then
+      printNewGame()
+      
+      if (menu.start[1] == true) then
+        printPressStart()
+      end
     end
-  end
-  
-  if game.over then
-    printGameOver()
-  end
-  
-  if game.pause then
-    printPause()
+    
+    if game.over then
+      printGameOver()
+    end
+    
+    if game.pause then
+      printPause()
+    end
   end
 end
 
@@ -473,55 +475,71 @@ end
 -------------------------------------
 -------------------------------------
 function love.keypressed(key)
-  if (game.on == false) and (key == " ") then
+  if (key == "c") or (key == "C") then
+    menu.controls[1] = true
+    menu.controls[2] = game.pause
     if sounds.play_sounds == true then
       sounds.menu:play()
     end
-    game.on = true
-    game.over = false
-    newShape(false)
-  elseif (key == "p") or (key == "P") then
-    if sounds.play_sounds == true then
-      sounds.menu:play()
-    end
-    game.pause = not game.pause
-  elseif (key == "q") or (key == "Q") then
-    love.event.quit()
-  elseif (key == "m") or (key == 'M') then
-    sounds.play_music = not sounds.play_music
-    if sounds.play_music == true then
-      sounds.music:play()
-    elseif sounds.play_music == false then
-      sounds.music:stop()
-    end
-  elseif (key == "s") or (key == 'S') then
-    sounds.play_sounds = not sounds.play_sounds
-  elseif (key == "l") or (key == 'L') then
-    if shape.max_random == #Shapes then
-      shape.max_random = 7
-    else
-      shape.max_random = #Shapes
-    end
-    shape.next_nb = math.random(0,shape.max_random)
-  elseif (game.pause == false) and (next(shape.pts) ~= nil) then
-    if key == "down" then
-      if testMap(0, 1) then
-        updateMapDown()
+    game.pause = true
+  elseif (menu.controls[1] == false) then
+    if (game.on == false) and (key == " ") then
+      if sounds.play_sounds == true then
+        sounds.menu:play()
       end
-    elseif key == "left" then
-      if testMap(-1, 0) then
-        updateMapLeft()
+      game.on = true
+      game.over = false
+      newShape(false)
+    elseif (key == "p") or (key == "P") then
+      if sounds.play_sounds == true then
+        sounds.menu:play()
       end
-    elseif key == "right" then
-      if testMap(1, 0) then
-        updateMapRight()
+      game.pause = not game.pause
+    elseif (key == "m") or (key == 'M') then
+      sounds.play_music = not sounds.play_music
+      if sounds.play_music == true then
+        sounds.music:play()
+      elseif sounds.play_music == false then
+        sounds.music:stop()
       end
-    elseif key == " " then
-      updateMapBottom()
-    elseif key == "up" then
-      rotateShape()
+    elseif (key == "s") or (key == 'S') then
+      sounds.play_sounds = not sounds.play_sounds
+    elseif (key == "l") or (key == 'L') then
+      if shape.max_random == #Shapes then
+        shape.max_random = 7
+      else
+        shape.max_random = #Shapes
+      end
+      shape.next_nb = math.random(0,shape.max_random)
+    elseif (game.pause == false) and (next(shape.pts) ~= nil) then
+      if key == "down" then
+        if testMap(0, 1) then
+          updateMapDown()
+        end
+      elseif key == "left" then
+        if testMap(-1, 0) then
+          updateMapLeft()
+        end
+      elseif key == "right" then
+        if testMap(1, 0) then
+          updateMapRight()
+        end
+      elseif key == " " then
+        updateMapBottom()
+      elseif key == "up" then
+        rotateShape()
+      end
     end
   end
+end
+
+function love.keyreleased(key)
+   if (menu.controls[1] == false) and (key == "escape" or key == "q" or key == "Q") then
+      love.event.quit()
+  elseif (key == "c") or (key == "C") then
+    menu.controls[1] = false    
+    game.pause = menu.controls[2]
+   end
 end
 
 -------------------------------------
@@ -731,7 +749,6 @@ function printGameOver()
   love.graphics.printf(tostring(score.last), x + window.x * 2, y - window.y, (window.x * (w-2)), 'center')
 end
 
-
 function newShape(reset)
   local i
   
@@ -744,7 +761,7 @@ function newShape(reset)
   end
 
   local max = shape.max_random
-  local shape_number = math.random(0,max)
+  local shape_number = math.random(1,max)
   
   if (shape.next_nb ~= 0) then
     local new_nb = shape.next_nb
@@ -757,7 +774,7 @@ function newShape(reset)
     shape = {pts = deepCopy(Shapes[shape_number]),
             nb = shape_number,
             rot_state = 0,
-            next_nb = math.random(0,max),
+            next_nb = math.random(1,max),
             max_random = max}
   end
   
@@ -772,6 +789,8 @@ function newShape(reset)
       colors_map[y][x] = Colors[shape.nb]
     end
   end
+  
+--  print("shape", "nb", shape.nb, "rot_state", shape.rot_state, "next_nb", shape.next_nb, "max_random", shape.max_random)
 end
 
 
