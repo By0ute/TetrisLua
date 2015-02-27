@@ -443,6 +443,9 @@ function love.draw()
   -- next shape
   printNextShape()
   
+  -- controls indication
+  printControlsIndication()
+  
   if (menu.controls[1] == true) then
     -- controls
     printControls()
@@ -656,35 +659,93 @@ function printNextShape()
   end
 end
 
-function printControls()
+function printControlsIndication()
+  love.graphics.setColor(255,0,0,255)
   local h = #map
   local w = #map[#map]
   local x = window.x * (w + 2)
-  local y = window.x * (w + 4) / 2
-  local mx = x + ((w*window.x) / 2)
-  local my = y + ((w*window.x) / 2)
+  local y = window.y * (h/2 + 5.5)
+  local yy = window.y * (h/2 + 6.5)
   
-  love.graphics.setNewFont("Arrows.ttf", 25)
-  love.graphics.setColor(255, 0, 0, 255)
-  love.graphics.print("B", x, my + window.x)
-  love.graphics.print("A", x, my + window.x*2)
-  love.graphics.print("C", x, my + window.x*3)
-  love.graphics.print("D", x, my + window.x*4)
-  love.graphics.setNewFont("Roboto-Condensed.ttf", 15)
-  love.graphics.print("SPACE", x, my + window.x*5)
-  love.graphics.print("P", x, my + window.x*6)
-  love.graphics.print("Q", x, my + window.x*7)
-  
-  local xx = x + window.x * 2.5
-  love.graphics.setColor(0, 0, 0, 255)
-  love.graphics.print("Go left", xx, my + window.x)
-  love.graphics.print("Go Right", xx, my + window.x*2)
-  love.graphics.print("Go Up", xx, my + window.x*3)
-  love.graphics.print("Go Down", xx, my + window.x*4)
-  love.graphics.print("Go Bottom", xx, my + window.x*5)
+  love.graphics.setNewFont("Roboto-Condensed.ttf", 20)  
+  love.graphics.setColor(0, 0, 255, 255)
+  love.graphics.printf("Press C", x, y, ((w*window.x) / 2), "center")
+  love.graphics.setNewFont("Roboto-Condensed.ttf", 15)  
   love.graphics.setColor(255, 255, 255, 255)
-  love.graphics.print("Pause", xx, my + window.x*6)
-  love.graphics.print("Quit!", xx, my + window.x*7)
+  love.graphics.printf("to show Controls", x, yy, ((w*window.x) / 2), "center")
+end
+
+function printControls()
+  local h = #map
+  local w = #map[#map]
+  local x = window.x * 2.1
+  local y = window.y * 2
+  local x_middle_left = (window.x * (w/2 - 2.5))
+  local x_middle_right = x + (window.x * (w/2 - 2))
+  local half_x = (window.x * (w/2))
+  
+  --
+  -- KEYS
+  --
+  -- <-
+  love.graphics.setNewFont("Arrows.ttf", 30)  
+  love.graphics.setColor(0, 0, 255, 255)
+  love.graphics.printf("B", x, y, x_middle_left, "right")
+  -- ->
+  love.graphics.printf("A", x, y + window.x*1.5, x_middle_left, "right")
+  -- ^
+  love.graphics.printf("C", x, y + window.x*3, x_middle_left, "right")
+  -- v
+  love.graphics.printf("D", x, y + window.x*4.5, x_middle_left, "right")
+  -- SPACE
+  love.graphics.setNewFont("Roboto-Condensed.ttf", 25)
+  love.graphics.printf("SPACE", x, y + window.x*6, x_middle_left, "right")
+  -- P
+  love.graphics.printf("P", x, y + window.x*7.5, x_middle_left, "right")
+  -- M
+  love.graphics.printf("M", x, y + window.x*9, x_middle_left, "right")
+  -- S
+  love.graphics.printf("S", x, y + window.x*10.5, x_middle_left, "right")
+  -- L
+  love.graphics.setColor(0, 255, 0, 255)
+  love.graphics.printf("L", x, y + window.x*12.5, x_middle_left, "right")
+  -- Q
+  love.graphics.setColor(255, 0, 0, 255)
+  love.graphics.printf("Q", x, y + window.x*14.5, x_middle_left, "right")
+  
+  
+  --
+  -- ACTIONS
+  --
+  -- LEFT
+  love.graphics.setNewFont("Roboto-Condensed.ttf", 25)  
+  love.graphics.setColor(0, 0, 0, 255)
+  love.graphics.printf("Go Left", x_middle_right, y, half_x, "left")
+  -- RIGHT
+  love.graphics.printf("Go Right", x_middle_right, y + window.x*1.5, half_x, "left")
+  -- UP
+  love.graphics.printf("Go Up", x_middle_right, y + window.x*3, half_x, "left")
+  -- DOWN
+  love.graphics.printf("Go Down", x_middle_right, y + window.x*4.5, half_x, "left")
+  -- BOTTOM
+  love.graphics.setNewFont("Roboto-Condensed.ttf", 24)  
+  love.graphics.printf("Go Bottom", x_middle_right, y + window.x*6, half_x, "left")
+  -- PAUSE
+  love.graphics.setNewFont("Roboto-Condensed.ttf", 25)  
+  love.graphics.printf("Pause", x_middle_right, y + window.x*7.5, half_x, "left")
+  -- MUSIC
+  love.graphics.setNewFont("Roboto-Condensed.ttf", 19)  
+  love.graphics.printf("On/Off Music", x_middle_right, y + window.x*9.1, half_x, "left")
+  -- SOUNDS
+  love.graphics.setNewFont("Roboto-Condensed.ttf", 17)  
+  love.graphics.printf("On/Off Sounds", x_middle_right, y + window.x*10.7, half_x, "left")
+  -- TETRIS MODE
+  love.graphics.setColor(255, 255, 255, 255)
+  love.graphics.printf("Super/Regular Tetris", x_middle_right, y + window.x*12.3, half_x, "left")
+  -- QUIT
+  love.graphics.setNewFont("Roboto-Condensed.ttf", 25)
+  love.graphics.setColor(255, 255, 0, 255)
+  love.graphics.printf("Quit!", x_middle_right, y + window.x*14.5, half_x, "left")
 end
 
 function printNewGame()
