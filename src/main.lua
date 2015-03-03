@@ -20,10 +20,10 @@ function love.load()
             bottom = love.audio.newSource("musics/bottom.mp3", "static"),
             rotate = love.audio.newSource("musics/rotate.mp3", "static"),
             line = love.audio.newSource("musics/line.mp3", "static"),
-            play_music = false,
-            play_sounds = false,}
+            play_music = true,
+            play_sounds = true,}
   sounds.music:setVolume(0.7)
---  sounds.music:play()
+  sounds.music:play()
   
 -- Random seed
   math.randomseed(os.time())
