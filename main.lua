@@ -1,7 +1,11 @@
--------------------------------------
+-- **********************************
+-- **********************************
+-- ********** INIT GAME *************
+-- **********************************
+-- **********************************
+
 -------------------------------------
 -- LOAD = INIT
--------------------------------------
 -------------------------------------
 function love.load()
 -- Interface
@@ -320,19 +324,26 @@ function love.load()
     }, -- I' 
   }
 
+  -- pre set of data
   game = {over = false}
   score = {last = 0}
   shape = {max_random = #Shapes}
+  
+  -- new game
   resetGame()
 end
 
+-------------------------------------
+-- resetGame = reset all data and grids
+-------------------------------------
 function resetGame()
+  -- main data
   shape = {pts = {}, nb = 0, rot_state = 0, next_nb = 0, max_random = shape.max_random}
   score = {current = 0, last = score.last}
   game = {over = game.over, on = false, pause = false, timer = 0}
   menu = {start = {true, 0, 0.5}, controls = {false, false}}
   
-  -- 10*18
+  -- Tetris grid 18*10
   map = {
       { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
       { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
@@ -354,7 +365,7 @@ function resetGame()
       { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
   }  
   
-  -- 10*18
+  -- Colors grid 18*10
   colors_map = {
       { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
       { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, },
@@ -377,40 +388,114 @@ function resetGame()
   }  
 end
 
+-------------------------------------
+-- newShape = make a new Tetris shape randomly chosen
+-- param reset : if there was a previous shape that needs to be locked in the grid
+-------------------------------------
+function newShape(reset)
+  local i
+  
+  -- if previous shape, becomes old and locked in the grid
+  if (reset) then
+    for i = 1, #shape.pts do
+      local x = shape.pts[i][1]
+      local y = shape.pts[i][2]
+      map[y][x] = 1
+    end
+  end
+
+  -- max : level of Tetris (super/regular)
+  local max = shape.max_random
+  -- next shape chosen by random
+  local shape_number = math.random(1,max)
+  
+  -- new chosen from next_nb
+  if (shape.next_nb ~= 0) then
+    local new_nb = shape.next_nb
+    shape = {pts = deepCopy(Shapes[new_nb]),
+            nb = new_nb,
+            rot_state = 0,
+            next_nb = shape_number,
+            max_random = max}
+  -- otherwise first shape
+  else  
+    shape = {pts = deepCopy(Shapes[shape_number]),
+            nb = shape_number,
+            rot_state = 0,
+            next_nb = math.random(1,max),
+            max_random = max}
+  end
+  
+  -- update grids with new shape
+  for i = 1, #shape.pts do
+    local x = shape.pts[i][1]
+    local y = shape.pts[i][2]
+    
+    -- if first line in the grid stuck : GAME OVER
+    if map[y][x] == 1 then
+      return gameOver()
+    else
+      map[y][x] = 2
+      colors_map[y][x] = Colors[shape.nb]
+    end
+  end
+end
+
+
+
+
+
+
+-- **********************************
+-- **********************************
+-- ******** LOVE FUNCTIONS **********
+-- **********************************
+-- **********************************
 
 -------------------------------------
--------------------------------------
--- UPDATE = WORK AT EACH TIME
--------------------------------------
+-- update = automatically update with time dt
 -------------------------------------
 function love.update(dt)
+  -- add time to the timer
   game.timer = game.timer + dt
   
+  -- loop the music
   if (sounds.play_music == true) and (sounds.music:isStopped()) then
     sounds.music:play()
   end
   
+  -- if game is on and no pause : update grids
   if ((game.on == true) and (game.pause == false)) then    
 
+    -- every second update the grid down
     if game.timer >= 1 then
       if next(shape.pts) ~= nil then
+        -- if shape can go down
         if testMap(0, 1) then
           updateMapDown()
+        -- otherwise reach bottom : check if lines are made
+        -- and make a new shape
         else
           local res_lines = checkForLine()
 
           if next(res_lines) ~= nil then
             updateGrid(res_lines)
+            -- newShape has FALSE because previous shape was already updated in the grid with the lines update
             newShape(false)
           else
+            -- newShape has TRUE to update the shape that just hit the bottom before make a new one
             newShape(true)
           end
         end
       end
+      
+      -- reset timer
       game.timer = 0
     end
-    
+  
+  -- if the game is off : print Game Over
   elseif (game.on == false) then
+    -- menu.start is blinking : [1] show/not show the text, [2] timer for blinking, [3] time step of blinking
     if (menu.start[2] < 0) then
       menu.start[1] = false
       menu.start[2] = 0
@@ -423,13 +508,108 @@ function love.update(dt)
       menu.start[2] = menu.start[2] + dt
     end
   end
-  
 end
 
 -------------------------------------
+-- keypressed = ARROWS CONTROLS
 -------------------------------------
--- DRAW = UI
+function love.keypressed(key)
+  -- shows control keys of the game (stay pressed)
+  if (key == "c") or (key == "C") then
+    menu.controls[1] = true
+    menu.controls[2] = game.pause
+    if sounds.play_sounds == true then
+      sounds.menu:play()
+    end
+    game.pause = true
+  -- others keys
+  -- if not showing control keys
+  elseif (menu.controls[1] == false) then
+    -- if game over and " " press : new game
+    if (game.on == false) and (key == " ") then
+      if sounds.play_sounds == true then
+        sounds.menu:play()
+      end
+      game.on = true
+      game.over = false
+      newShape(false)
+    -- if "p" : pause/not pause game
+    elseif (key == "p") or (key == "P") then
+      if sounds.play_sounds == true then
+        sounds.menu:play()
+      end
+      game.pause = not game.pause
+    -- "m" : on/off music
+    elseif (key == "m") or (key == 'M') then
+      sounds.play_music = not sounds.play_music
+      if sounds.play_music == true then
+        sounds.music:play()
+      elseif sounds.play_music == false then
+        sounds.music:stop()
+      end
+    -- "s" : on/off sounds
+    elseif (key == "s") or (key == 'S') then
+      sounds.play_sounds = not sounds.play_sounds
+    -- "l" : super/regular Tetriss
+    elseif (key == "l") or (key == 'L') then
+      if shape.max_random == #Shapes then
+        shape.max_random = 7
+      else
+        shape.max_random = #Shapes
+      end
+      shape.next_nb = math.random(0,shape.max_random)
+    -- if game is not paused and there is a current shape
+    -- movement keys
+    elseif (game.pause == false) and (next(shape.pts) ~= nil) then
+      if key == "down" then
+        if testMap(0, 1) then
+          updateMapDown()
+        end
+      elseif key == "left" then
+        if testMap(-1, 0) then
+          updateMapLeft()
+        end
+      elseif key == "right" then
+        if testMap(1, 0) then
+          updateMapRight()
+        end
+      elseif key == " " then
+        updateMapBottom()
+      elseif key == "up" then
+        rotateShape()
+      end
+    end
+  end
+end
+
 -------------------------------------
+-- keyreleased = Quit and Controls
+-------------------------------------
+function love.keyreleased(key)
+  -- if not showing controls and quitting game key : quit
+   if (menu.controls[1] == false) and (key == "escape" or key == "q" or key == "Q") then
+      love.event.quit()
+  -- if "c" released, stop showing control keys and back to the game
+  elseif (key == "c") or (key == "C") then
+    menu.controls[1] = false    
+    game.pause = menu.controls[2]
+   end
+end
+
+
+
+
+
+
+
+-- **********************************
+-- **********************************
+-- ******** PRINT FUNCTIONS *********
+-- **********************************
+-- **********************************
+
+-------------------------------------
+-- draw = UI
 -------------------------------------
 function love.draw()
   love.graphics.setBackgroundColor(100,100,100,255)
@@ -457,126 +637,29 @@ function love.draw()
     if (game.on == false) then
       printNewGame()
       
+      -- blinking
       if (menu.start[1] == true) then
         printPressStart()
       end
     end
     
+    -- game over with last score
     if game.over then
       printGameOver()
     end
     
+    -- pause time
     if game.pause then
       printPause()
     end
   end
 end
 
--------------------------------------
--------------------------------------
--- KEYPRESSED = ARROWS CONTROLS
--------------------------------------
--------------------------------------
-function love.keypressed(key)
-  if (key == "c") or (key == "C") then
-    menu.controls[1] = true
-    menu.controls[2] = game.pause
-    if sounds.play_sounds == true then
-      sounds.menu:play()
-    end
-    game.pause = true
-  elseif (menu.controls[1] == false) then
-    if (game.on == false) and (key == " ") then
-      if sounds.play_sounds == true then
-        sounds.menu:play()
-      end
-      game.on = true
-      game.over = false
-      newShape(false)
-    elseif (key == "p") or (key == "P") then
-      if sounds.play_sounds == true then
-        sounds.menu:play()
-      end
-      game.pause = not game.pause
-    elseif (key == "m") or (key == 'M') then
-      sounds.play_music = not sounds.play_music
-      if sounds.play_music == true then
-        sounds.music:play()
-      elseif sounds.play_music == false then
-        sounds.music:stop()
-      end
-    elseif (key == "s") or (key == 'S') then
-      sounds.play_sounds = not sounds.play_sounds
-    elseif (key == "l") or (key == 'L') then
-      if shape.max_random == #Shapes then
-        shape.max_random = 7
-      else
-        shape.max_random = #Shapes
-      end
-      shape.next_nb = math.random(0,shape.max_random)
-    elseif (game.pause == false) and (next(shape.pts) ~= nil) then
-      if key == "down" then
-        if testMap(0, 1) then
-          updateMapDown()
-        end
-      elseif key == "left" then
-        if testMap(-1, 0) then
-          updateMapLeft()
-        end
-      elseif key == "right" then
-        if testMap(1, 0) then
-          updateMapRight()
-        end
-      elseif key == " " then
-        updateMapBottom()
-      elseif key == "up" then
-        rotateShape()
-      end
-    end
-  end
-end
 
-function love.keyreleased(key)
-   if (menu.controls[1] == false) and (key == "escape" or key == "q" or key == "Q") then
-      love.event.quit()
-  elseif (key == "c") or (key == "C") then
-    menu.controls[1] = false    
-    game.pause = menu.controls[2]
-   end
-end
 
--------------------------------------
--------------------------------------
--- testMap = BOUNDARIES OF THE GRID
--------------------------------------
--------------------------------------
-function testMap(x, y)
-  if next(shape.pts) == nil then
-    return false
-  else
-    local i
-    local nb_pieces = 0
-    
-    for i = 1, #shape.pts do
-      local px = shape.pts[i][1]
-      local py = shape.pts[i][2]
-      
-      if ((py + y) <= #map) and ((py + y) > 0) and
-        ((px + x) <= #map[#map]) and ((px + x) > 0) then
-          if (map[py+y][px+x] ~= 1) then
-            nb_pieces = nb_pieces + 1
-          end
-      end
-    end
-    
-    return (nb_pieces == #shape.pts)
-  end
-end
 
--------------------------------------
 -------------------------------------
 -- printLines = PRINT THE FRAME OF THE GRID
--------------------------------------
 -------------------------------------
 function printLines()
   love.graphics.setColor(0,0,0,255)
@@ -586,7 +669,6 @@ function printLines()
   local y = window.y
   local mx = x*(w+1)
   local my = y*(h+1)
-
   
   love.graphics.line(x, y, x, my)
   love.graphics.line(x, y, mx, y)
@@ -595,9 +677,7 @@ function printLines()
 end
 
 -------------------------------------
--------------------------------------
 -- printGrid = PRINT THE MATRIX-GRID (SQUARES OR EMPTY)
--------------------------------------
 -------------------------------------
 function printGrid()
   local w, h
@@ -612,6 +692,9 @@ function printGrid()
   end
 end
 
+-------------------------------------
+-- printScore = PRINT THE CURRENT SCORE
+-------------------------------------
 function printScore()
   love.graphics.setColor(0,0,0,255)
   local h = #map
@@ -632,6 +715,9 @@ function printScore()
   love.graphics.printf(tostring(score.current), x, my/2, window.x * w/2, 'center')
 end
 
+-------------------------------------
+-- printNextShape = SHOW THE NEXT SHAPE INCOMING
+-------------------------------------
 function printNextShape()
   love.graphics.setColor(0,0,0,255)
   local h = #map
@@ -659,6 +745,9 @@ function printNextShape()
   end
 end
 
+-------------------------------------
+-- printControlsIndication = PRINT THE INDICATIONS TO SHOW CONTROL KEYS
+-------------------------------------
 function printControlsIndication()
   love.graphics.setColor(255,0,0,255)
   local h = #map
@@ -675,6 +764,9 @@ function printControlsIndication()
   love.graphics.printf("to show Controls", x, yy, ((w*window.x) / 2), "center")
 end
 
+-------------------------------------
+-- printControls = PRINT CONTROL KEYS
+-------------------------------------
 function printControls()
   local h = #map
   local w = #map[#map]
@@ -748,6 +840,9 @@ function printControls()
   love.graphics.printf("Quit!", x_middle_right, y + window.x*14.5, half_x, "left")
 end
 
+-------------------------------------
+-- printNewGame = PRINT NEW GAME 
+-------------------------------------
 function printNewGame()
   local h = #map
   local w = #map[#map]
@@ -759,6 +854,9 @@ function printNewGame()
   love.graphics.printf("NEW GAME", x, y, (window.x * (w-2)), 'center')
 end
 
+-------------------------------------
+-- printPressStart = BLINKING PRESS START FOR A NEW GAME 
+-------------------------------------
 function printPressStart()
   local h = #map
   local w = #map[#map]
@@ -774,6 +872,9 @@ function printPressStart()
   love.graphics.printf("to start", x, y + window.y*2, (window.x * (w-2)), 'center')
 end
 
+-------------------------------------
+-- printPause = PRINT PAUSE
+-------------------------------------
 function printPause()
   local h = #map
   local w = #map[#map]
@@ -785,16 +886,9 @@ function printPause()
   love.graphics.printf("PAUSE", x, y, (window.x * (w-2)), 'center')
 end
 
-function gameOver()
-  if sounds.play_sounds == true then
-    sounds.game_over:play()
-  end
-  game.on = false
-  game.over = true
-  score.last = score.current
-  resetGame()
-end
-
+-------------------------------------
+-- printGameOver = PRINT GAME OVER
+-------------------------------------
 function printGameOver()
   local h = #map
   local w = #map[#map]
@@ -810,55 +904,50 @@ function printGameOver()
   love.graphics.printf(tostring(score.last), x + window.x * 2, y - window.y, (window.x * (w-2)), 'center')
 end
 
-function newShape(reset)
-  local i
-  
-  if (reset) then
-    for i = 1, #shape.pts do
-      local x = shape.pts[i][1]
-      local y = shape.pts[i][2]
-      map[y][x] = 1
-    end
-  end
 
-  local max = shape.max_random
-  local shape_number = math.random(1,max)
-  
-  if (shape.next_nb ~= 0) then
-    local new_nb = shape.next_nb
-    shape = {pts = deepCopy(Shapes[new_nb]),
-            nb = new_nb,
-            rot_state = 0,
-            next_nb = shape_number,
-            max_random = max}
-  else  
-    shape = {pts = deepCopy(Shapes[shape_number]),
-            nb = shape_number,
-            rot_state = 0,
-            next_nb = math.random(1,max),
-            max_random = max}
-  end
-  
-  for i = 1, #shape.pts do
-    local x = shape.pts[i][1]
-    local y = shape.pts[i][2]
+
+
+
+
+
+-- **********************************
+-- **********************************
+-- ******** GRIDS UPDATES ***********
+-- **********************************
+-- **********************************
+
+-------------------------------------
+-- testMap = test if given pts of the current shape with the movement (x,y) it will fit in the grid without collision
+-------------------------------------
+function testMap(x, y)
+  -- if no current shape : false
+  if next(shape.pts) == nil then
+    return false
+  else
+    local i
+    local nb_pieces = 0
     
-    if map[y][x] == 1 then
-      return gameOver()
-    else
-      map[y][x] = 2
-      colors_map[y][x] = Colors[shape.nb]
+    -- for each point of the shape, apply (x,y) and check if the grid is free at this spot
+    for i = 1, #shape.pts do
+      local px = shape.pts[i][1]
+      local py = shape.pts[i][2]
+      
+      if ((py + y) <= #map) and ((py + y) > 0) and
+        ((px + x) <= #map[#map]) and ((px + x) > 0) then
+          -- if free spot : +1 point correct
+          if (map[py+y][px+x] ~= 1) then
+            nb_pieces = nb_pieces + 1
+          end
+      end
     end
+    
+    -- if nb of free spots == nb of points : move correct
+    return (nb_pieces == #shape.pts)
   end
-  
---  print("shape", "nb", shape.nb, "rot_state", shape.rot_state, "next_nb", shape.next_nb, "max_random", shape.max_random)
 end
 
-
--------------------------------------
 -------------------------------------
 -- updateMapDown = MOVES THE CURRENT SHAPE DOWN
--------------------------------------
 -------------------------------------
 function updateMapDown()
   if sounds.play_sounds == true then
@@ -867,6 +956,8 @@ function updateMapDown()
   
   local i 
   
+  -- update position grid and color grid
+  -- last position set to free
   for i = 1, #shape.pts  do
     local x = shape.pts[i][1]
     local y = shape.pts[i][2]
@@ -875,6 +966,7 @@ function updateMapDown()
     shape.pts[i][2] = y + 1
   end
   
+  -- new position set to busy
   for i = 1, #shape.pts do
     local x = shape.pts[i][1]
     local y = shape.pts[i][2]
@@ -884,9 +976,7 @@ function updateMapDown()
 end
 
 -------------------------------------
--------------------------------------
 -- updateMapLeft = MOVES THE CURRENT SHAPE LEFT
--------------------------------------
 -------------------------------------
 function updateMapLeft()
   if sounds.play_sounds == true then
@@ -894,7 +984,9 @@ function updateMapLeft()
   end
   
   local i
-  
+
+  -- update position grid and color grid
+  -- last position set to free
   for i = 1, #shape.pts do
     local x = shape.pts[i][1]
     local y = shape.pts[i][2]
@@ -903,6 +995,7 @@ function updateMapLeft()
     shape.pts[i][1] = x - 1
   end
   
+  -- new position set to busy
   for i = 1, #shape.pts do
     local x = shape.pts[i][1]
     local y = shape.pts[i][2]
@@ -911,11 +1004,8 @@ function updateMapLeft()
   end
 end
 
-
--------------------------------------
 -------------------------------------
 -- updateMapRight = MOVES THE CURRENT SHAPE RIGHT
--------------------------------------
 -------------------------------------
 function updateMapRight()
   if sounds.play_sounds == true then
@@ -924,6 +1014,8 @@ function updateMapRight()
   
   local i
   
+  -- update position grid and color grid
+  -- last position set to free
   for i = 1, #shape.pts do
     local x = shape.pts[i][1]
     local y = shape.pts[i][2]
@@ -932,6 +1024,7 @@ function updateMapRight()
     shape.pts[i][1] = x + 1
   end
   
+  -- new position set to busy
   for i = 1, #shape.pts do
     local x = shape.pts[i][1]
     local y = shape.pts[i][2]
@@ -940,11 +1033,8 @@ function updateMapRight()
   end
 end
 
-
--------------------------------------
 -------------------------------------
 -- updateMapBottom = MOVES THE CURRENT SHAPE STRAIGHT TO THE BOTTOM OF THE GRID
--------------------------------------
 -------------------------------------
 function updateMapBottom()
   while testMap(0, 1) do
@@ -956,42 +1046,15 @@ function updateMapBottom()
   end
 end
 
-
-function rotateShape()
-  local rotated_shape = deepCopy(shape.pts)
-  
---  local rotation = Rotations[shape_number][rotation_state+1]
-  local rotation = Rotations[shape.nb][shape.rot_state+1]
-  local i
-  
-  for i=1,#rotated_shape do
-    rotated_shape[i][1] = rotated_shape[i][1] + rotation[i][1]
-    rotated_shape[i][2] = rotated_shape[i][2] + rotation[i][2]
-  end
-  
-  if gridOccupied(rotated_shape) == false then
-    updateRotatedGrid(rotated_shape)
-  end  
-end
-
-function gridOccupied(shape) 
-  for k, v in pairs(shape) do
-    local h = v[2]
-    local w = v[1]
-    
-    if (h < 1) or (w < 1) or (h > #map) or (w > #map[#map]) or map[h][w] == 1 then
-      return true
-    end
-  end
-  
-  return false
-end
-
+-------------------------------------
+-- updateRotatedGrid = rotate current shape
+-------------------------------------
 function updateRotatedGrid(rotated_shape)
   if sounds.play_sounds == true then
     sounds.rotate:play()
   end
   
+  -- last position set to free
   for i = 1, #shape.pts do
     local x = shape.pts[i][1]
     local y = shape.pts[i][2]
@@ -999,6 +1062,7 @@ function updateRotatedGrid(rotated_shape)
     colors_map[y][x] = {0,0,0,0}
   end
   
+  -- new position set to busy
   for i = 1, #rotated_shape do
     local x = rotated_shape[i][1]
     local y = rotated_shape[i][2]
@@ -1006,63 +1070,36 @@ function updateRotatedGrid(rotated_shape)
     colors_map[y][x] = Colors[shape.nb]
   end
   
+  -- update rotate state and shape
   shape.pts = rotated_shape
   shape.rot_state = (shape.rot_state + 1) % 4
 end
 
-
-
-
--------------------------------------
--------------------------------------
--- checkForLine = IF A LINE IS COMPLETE RETURNS YES
--------------------------------------
--------------------------------------
-function checkForLine()
-  local h, w
-  local nb_pixels = 0
-  local res_lines = {}
-  
-  for h=1,#map do
-    nb_pixels = 0
-    
-    for w=1,#map[#map] do
-      if map[h][w] ~= 0 then
-        nb_pixels = nb_pixels + 1
-      end
-    end
-    
-    if nb_pixels == #map[#map] then
-      table.insert(res_lines, h)
-    end
-  end
- 
-  return res_lines
-end
-
--------------------------------------
 -------------------------------------
 -- updateGrid = IF A LINE IS MADE, ERASES IT AND STACKS EVERYTHING ONE LEVEL DOWN & MAKES A NEW SQUARE
--------------------------------------
 -------------------------------------
 function updateGrid(res_lines)
   local i, k, v
  
+ -- current shape stacked in the grid
   for i = 1, #shape.pts do
     local x = shape.pts[i][1]
     local y = shape.pts[i][2]
     map[y][x] = 1
   end
   
+  -- for each line made
   for k, v in pairs(res_lines) do
     local line = v
     local h, w
     
+    -- erase line made
     for w=1,#map[#map] do
       map[line][w] = 0
       colors_map[line][w] = {0,0,0,0}
     end
     
+    -- drop everything else one step down
     for h=line,2,-1 do
       for w=1,#map[#map] do
         map[h][w] = map[h-1][w]
@@ -1070,6 +1107,7 @@ function updateGrid(res_lines)
       end
     end
     
+    -- erase 1st line
     for w=1,#map[#map] do
       map[1][w] = 0
       colors_map[1][w] = {0,0,0,0}
@@ -1079,10 +1117,126 @@ function updateGrid(res_lines)
       sounds.line:play()
     end
     
+    -- update score
     score.current = score.current + factorial(#res_lines)
   end
 end
 
+
+
+
+
+
+
+-- **********************************
+-- **********************************
+-- ****** GAMEPLAY FUNCTIONS ********
+-- **********************************
+-- **********************************
+
+-------------------------------------
+-- gameOver = game is off. reset score and game
+-------------------------------------
+function gameOver()
+  if sounds.play_sounds == true then
+    sounds.game_over:play()
+  end
+  game.on = false
+  game.over = true
+  score.last = score.current
+  resetGame()
+end
+
+-------------------------------------
+-- rotateShape = if a rotation of the current shape is requested
+------------------------------------- 
+function rotateShape()
+  -- to test if the rotation is valid, we use a temp shape
+  -- deepCopy otherwise it will use the & of the shape if the struct Shapes
+  local rotated_shape = deepCopy(shape.pts)
+  
+  -- which rotation to do
+  local rotation = Rotations[shape.nb][shape.rot_state+1]
+  local i
+  
+  -- make the rotation on the temp shape
+  for i=1,#rotated_shape do
+    rotated_shape[i][1] = rotated_shape[i][1] + rotation[i][1]
+    rotated_shape[i][2] = rotated_shape[i][2] + rotation[i][2]
+  end
+  
+  -- if the temp shape rotated fits the grid : temp -> current
+  if gridOccupied(rotated_shape) == false then
+    updateRotatedGrid(rotated_shape)
+  end  
+end
+
+-------------------------------------
+-- gridOccupied = if a rotation of the current shape is requested
+------------------------------------- 
+function gridOccupied(shape) 
+  -- for each point of the temp shape
+  for k, v in pairs(shape) do
+    -- y
+    local h = v[2]
+    -- x
+    local w = v[1]
+    
+    -- if (h,w) are out of boundaries of the grid or the spot is busy : rotation invalid
+    if (h < 1) or (w < 1) or (h > #map) or (w > #map[#map]) or map[h][w] == 1 then
+      return true
+    end
+  end
+  
+  -- otherwise rotation valid
+  return false
+end
+
+-------------------------------------
+-- checkForLine = IF A LINE IS COMPLETE RETURNS YES
+-------------------------------------
+function checkForLine()
+  local h, w
+  local nb_pixels = 0
+  local res_lines = {}
+  
+  -- for each row
+  for h=1,#map do
+    nb_pixels = 0
+    
+    -- for each column of the current row
+    for w=1,#map[#map] do
+      -- if the spot is busy : +1
+      if map[h][w] ~= 0 then
+        nb_pixels = nb_pixels + 1
+      end
+    end
+    
+    -- if the nb of busy spots for the current row is nb of cells in the row : line made
+    -- add nb of row for future update
+    if nb_pixels == #map[#map] then
+      table.insert(res_lines, h)
+    end
+  end
+ 
+  return res_lines
+end
+
+
+
+
+
+
+
+-- **********************************
+-- **********************************
+-- ******** USEFUL FUNCTIONS ********
+-- **********************************
+-- **********************************
+
+-------------------------------------
+-- factorial = Recursive facto for a better score if several lines made at once
+-------------------------------------
 function factorial(nb)
   if nb < 0 then
     return 0
@@ -1095,11 +1249,8 @@ function factorial(nb)
   end
 end
 
-
 -------------------------------------
--------------------------------------
--- debugPrintMatrix = PRINTS THE MATRIX FOR DEBUG
--------------------------------------
+-- debugPrintMatrix = PRINTS THE MATRIX - POSITION GRID - FOR DEBUG
 -------------------------------------
 function debugPrintMatrix()
   local w, h
@@ -1115,7 +1266,9 @@ function debugPrintMatrix()
   print("\n\n")
 end
 
-
+-------------------------------------
+-- deepCopy = MAKES A DEEP COPY OF THE ORIGINAL TO CREATE A NEW OBJECT WITH A NEW ADDRESS
+-------------------------------------
 function deepCopy(original)
     local copy = {}
     for k, v in pairs(original) do
