@@ -13,13 +13,13 @@ function love.load()
   love.window.setMode(360, 400, {resizable=false})
   
 -- music
-  sounds = {music = love.audio.newSource("tetris.mp3"),
-            menu = love.audio.newSource("menu.mp3", "static"),
-            game_over = love.audio.newSource("gameover.mp3", "static"),
-            move = love.audio.newSource("move.mp3", "static"),
-            bottom = love.audio.newSource("bottom.mp3", "static"),
-            rotate = love.audio.newSource("rotate.mp3", "static"),
-            line = love.audio.newSource("line.mp3", "static"),
+  sounds = {music = love.audio.newSource("musics/tetris.mp3"),
+            menu = love.audio.newSource("musics/menu.mp3", "static"),
+            game_over = love.audio.newSource("musics/gameover.mp3", "static"),
+            move = love.audio.newSource("musics/move.mp3", "static"),
+            bottom = love.audio.newSource("musics/bottom.mp3", "static"),
+            rotate = love.audio.newSource("musics/rotate.mp3", "static"),
+            line = love.audio.newSource("musics/line.mp3", "static"),
             play_music = false,
             play_sounds = false,}
   sounds.music:setVolume(0.7)
@@ -710,7 +710,7 @@ function printScore()
   love.graphics.line(x, my, mx, my)
   love.graphics.line(mx, y, mx, my)
   
-  love.graphics.setNewFont("VCR_OSD_MONO.ttf", 30)  
+  love.graphics.setNewFont("fonts/VCR_OSD_MONO.ttf", 30)  
   love.graphics.setColor(255, 255, 0, 255)
   love.graphics.printf(tostring(score.current), x, my/2, window.x * w/2, 'center')
 end
@@ -756,10 +756,10 @@ function printControlsIndication()
   local y = window.y * (h/2 + 5.5)
   local yy = window.y * (h/2 + 6.5)
   
-  love.graphics.setNewFont("Roboto-Condensed.ttf", 20)  
+  love.graphics.setNewFont("fonts/Roboto-Condensed.ttf", 20)  
   love.graphics.setColor(0, 0, 255, 255)
   love.graphics.printf("Press C", x, y, ((w*window.x) / 2), "center")
-  love.graphics.setNewFont("Roboto-Condensed.ttf", 15)  
+  love.graphics.setNewFont("fonts/Roboto-Condensed.ttf", 15)  
   love.graphics.setColor(255, 255, 255, 255)
   love.graphics.printf("to show Controls", x, yy, ((w*window.x) / 2), "center")
 end
@@ -780,7 +780,7 @@ function printControls()
   -- KEYS
   --
   -- <-
-  love.graphics.setNewFont("Arrows.ttf", 30)  
+  love.graphics.setNewFont("fonts/Arrows.ttf", 30)  
   love.graphics.setColor(0, 0, 255, 255)
   love.graphics.printf("B", x, y, x_middle_left, "right")
   -- ->
@@ -790,7 +790,7 @@ function printControls()
   -- v
   love.graphics.printf("D", x, y + window.x*4.5, x_middle_left, "right")
   -- SPACE
-  love.graphics.setNewFont("Roboto-Condensed.ttf", 25)
+  love.graphics.setNewFont("fonts/Roboto-Condensed.ttf", 25)
   love.graphics.printf("SPACE", x, y + window.x*6, x_middle_left, "right")
   -- P
   love.graphics.printf("P", x, y + window.x*7.5, x_middle_left, "right")
@@ -810,7 +810,7 @@ function printControls()
   -- ACTIONS
   --
   -- LEFT
-  love.graphics.setNewFont("Roboto-Condensed.ttf", 25)  
+  love.graphics.setNewFont("fonts/Roboto-Condensed.ttf", 25)  
   love.graphics.setColor(0, 0, 0, 255)
   love.graphics.printf("Go Left", x_middle_right, y, half_x, "left")
   -- RIGHT
@@ -820,22 +820,22 @@ function printControls()
   -- DOWN
   love.graphics.printf("Go Down", x_middle_right, y + window.x*4.5, half_x, "left")
   -- BOTTOM
-  love.graphics.setNewFont("Roboto-Condensed.ttf", 24)  
+  love.graphics.setNewFont("fonts/Roboto-Condensed.ttf", 24)  
   love.graphics.printf("Go Bottom", x_middle_right, y + window.x*6, half_x, "left")
   -- PAUSE
-  love.graphics.setNewFont("Roboto-Condensed.ttf", 25)  
+  love.graphics.setNewFont("fonts/Roboto-Condensed.ttf", 25)  
   love.graphics.printf("Pause", x_middle_right, y + window.x*7.5, half_x, "left")
   -- MUSIC
-  love.graphics.setNewFont("Roboto-Condensed.ttf", 19)  
+  love.graphics.setNewFont("fonts/Roboto-Condensed.ttf", 19)  
   love.graphics.printf("On/Off Music", x_middle_right, y + window.x*9.1, half_x, "left")
   -- SOUNDS
-  love.graphics.setNewFont("Roboto-Condensed.ttf", 17)  
+  love.graphics.setNewFont("fonts/Roboto-Condensed.ttf", 17)  
   love.graphics.printf("On/Off Sounds", x_middle_right, y + window.x*10.7, half_x, "left")
   -- TETRIS MODE
   love.graphics.setColor(255, 255, 255, 255)
   love.graphics.printf("Super/Regular Tetris", x_middle_right, y + window.x*12.3, half_x, "left")
   -- QUIT
-  love.graphics.setNewFont("Roboto-Condensed.ttf", 25)
+  love.graphics.setNewFont("fonts/Roboto-Condensed.ttf", 25)
   love.graphics.setColor(255, 255, 0, 255)
   love.graphics.printf("Quit!", x_middle_right, y + window.x*14.5, half_x, "left")
 end
@@ -849,7 +849,7 @@ function printNewGame()
   local x = window.x * 2
   local y = window.y * (h - 4)
   
-  love.graphics.setNewFont("Mario-Kart-DS.ttf", 30)  
+  love.graphics.setNewFont("fonts/Mario-Kart-DS.ttf", 30)  
   love.graphics.setColor(255, 128, 0, 255)
   love.graphics.printf("NEW GAME", x, y, (window.x * (w-2)), 'center')
 end
@@ -863,7 +863,7 @@ function printPressStart()
   local x = window.x * 2
   local y = window.y * (h - 2.5)
   
-  love.graphics.setNewFont("Mario-Kart-DS.ttf", 20)  
+  love.graphics.setNewFont("fonts/Mario-Kart-DS.ttf", 20)  
   love.graphics.setColor(128, 0, 255, 255)
   love.graphics.printf("press", x, y, (window.x * (w-2)), 'center')
   love.graphics.setColor(255, 255, 255, 255)
@@ -881,7 +881,7 @@ function printPause()
   local x = window.x * 2
   local y = window.y * (h/2)
   
-  love.graphics.setNewFont("Roboto-Condensed.ttf", 40)  
+  love.graphics.setNewFont("fonts/Roboto-Condensed.ttf", 40)  
   love.graphics.setColor(255, 255, 255, 255)
   love.graphics.printf("PAUSE", x, y, (window.x * (w-2)), 'center')
 end
@@ -895,11 +895,11 @@ function printGameOver()
   local x = window.x * 2
   local y = window.y * (h - 7)
   
-  love.graphics.setNewFont("DoubleFeature20.ttf", 40)  
+  love.graphics.setNewFont("fonts/DoubleFeature20.ttf", 40)  
   love.graphics.setColor(255, 0, 0, 255)
   love.graphics.print("GAME OVER", x, y, -45)
   
-  love.graphics.setNewFont("VCR_OSD_MONO.ttf", 40)  
+  love.graphics.setNewFont("fonts/VCR_OSD_MONO.ttf", 40)  
   love.graphics.setColor(255, 255, 255, 255)
   love.graphics.printf(tostring(score.last), x + window.x * 2, y - window.y, (window.x * (w-2)), 'center')
 end
