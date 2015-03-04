@@ -6,6 +6,8 @@ Personal project to learn **Lua** with the library [**Löve2d**](https://love2d.
 ## How to play?
 **Download the project [TetrisLua](https://github.com/By0ute/TetrisLua/archive/master.zip) on [GitHub](https://github.com/)**
 
+###### *Click* [**HERE**](https://github.com/By0ute/TetrisLua/archive/master.zip) *to download the project*
+
 *and use one of the following option*
 
 1. **if you use Windows x64**, extract and use *Tetris.exe* in *windows_x64/*
