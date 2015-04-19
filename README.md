@@ -15,6 +15,7 @@ Personal project to learn **Lua** with the library [**Löve2d**](https://love2d.
 3. **if you use Linux or Mac** *(or if you want to try Löve)*, download and install [Löve2d](https://love2d.org/). Then use *love-file/Tetris.love* (in the project) with *love.exe* (in the LÖVE folder)
 
 ## Demo
+**Clic the picture for the video demo**
 [![Tetris Lua](https://github.com/By0ute/TetrisLua/blob/master/src/img/tetrislua.png)](https://vimeo.com/carob/tetrislua)
 
 
