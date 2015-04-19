@@ -16,6 +16,7 @@ Personal project to learn **Lua** with the library [**Löve2d**](https://love2d.
 
 ## Demo
 **Clic the picture for the video demo**
+
 [![Tetris Lua](https://github.com/By0ute/TetrisLua/blob/master/src/img/tetrislua.png)](https://vimeo.com/carob/tetrislua)
 
 
